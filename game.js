@@ -42,7 +42,7 @@
   const RULES = {
     2: { headStart: 6, seekTime: 40 },
     3: { headStart: 8, seekTime: 60 },
-    twoSeekers: { headStart: 8, seekTime: 40 },
+    twoSeekers: { headStart: 8, seekTime: 35 },
   };
 
   const CFG = {
