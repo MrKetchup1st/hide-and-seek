@@ -54,8 +54,8 @@
       walk: 284,
       sprint: 429,
       hideSpeed: 1.25,
-      seekWalk: 0.75,
-      seekSprint: 0.85,
+      seekWalk: 0.5,
+      seekSprint: 0.5,
       darkSpeed: 1.1,
     },
     seeker: { walk: 304, sprint: 424, finalBoost: 1.15 },
@@ -95,8 +95,9 @@
   };
 
   const SEEKER_LIGHT_MODES = [
-    { cone: 50, rangeMult: 1 },
-    { cone: 35, rangeMult: 1.4 },
+    { cone: 40, rangeMult: 1.6 },
+    { cone: 75, rangeMult: 0.75 },
+    { cone: 360, rangeMult: 0.5 },
   ];
 
   let WALLS = [
@@ -1068,8 +1069,8 @@
 
   const beams = {
     hider: makeBeamSprite(FLASHLIGHT.cone),
-    seekerWide: makeBeamSprite(SEEKER_LIGHT_MODES[0].cone),
-    seekerLong: makeBeamSprite(SEEKER_LIGHT_MODES[1].cone),
+    seekerLong: makeBeamSprite(SEEKER_LIGHT_MODES[0].cone),
+    seekerWide: makeBeamSprite(SEEKER_LIGHT_MODES[1].cone),
   };
 
   const revealGlow = (() => {
@@ -2723,7 +2724,7 @@
         tryPing(ent);
       }
       const d = Math.hypot(target.x - ent.x, target.y - ent.y);
-      ent.lightMode = d > 280 ? 1 : 0;
+      ent.lightMode = d > 280 ? 0 : d < 140 ? 2 : 1;
       ent.aiDir =
         d < 12 ? { x: 0, y: 0 } : aiProbeDir(ent, target.x, target.y);
       ent.aiSprint = false;
@@ -3109,13 +3110,16 @@
     d.fillRect(0, 0, VIEW_W, VIEW_H);
 
     for (const ent of activeSeekers()) {
-      const modeIndex = ent.lightMode === 1 ? 1 : 0;
+      const modeIndex =
+        ent.lightMode === 2 ? 2 : ent.lightMode === 1 ? 1 : 0;
       const mode = SEEKER_LIGHT_MODES[modeIndex];
-      addPlayerLight(
-        ent,
-        modeIndex === 1 ? beams.seekerLong : beams.seekerWide,
-        FLASHLIGHT.range * mode.rangeMult
-      );
+      const sprite =
+        modeIndex === 2
+          ? revealGlow
+          : modeIndex === 1
+          ? beams.seekerWide
+          : beams.seekerLong;
+      addPlayerLight(ent, sprite, FLASHLIGHT.range * mode.rangeMult);
     }
     for (const hider of hiders) {
       if (!hider.alive || hider.insideHide) continue;
@@ -3922,7 +3926,7 @@
         ? mode === 2 || twoSeekers
           ? "HARD: dash · spikes slow 3s."
           : "HARD: dash · spikes bleed 7s · heal 2.5s."
-        : "+25% head start · seek -25% walk / -15% sprint."
+        : "+25% head start · 50% seek speed."
     );
 
     const seekerRows = isDuo
@@ -3979,8 +3983,8 @@
     );
     ctx.fillText(
       isDuo
-        ? "Hiders 30° / 0.7× range · Seekers 50°/1× or 35°/1.4× · roles change each round."
-        : "Hiders 30° / 0.7× range · Seeker 50°/1× or 35°/1.4× · roles change each round.",
+        ? "Hiders 30° / 0.7× range · Seekers 40°/1.6×, 75°/0.75×, or 360°/0.5× · roles change each round."
+        : "Hiders 30° / 0.7× range · Seeker 40°/1.6×, 75°/0.75×, or 360°/0.5× · roles change each round.",
       CW / 2,
       534
     );
