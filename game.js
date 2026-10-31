@@ -1419,10 +1419,11 @@
         seekerGroups: groups.filter((g) => g !== hiderGroup),
       };
     } else {
-      let candidates = previous
-        ? groups.filter((g) => !previous.seekerGroups.includes(g))
-        : groups;
-      if (!candidates.length) candidates = groups;
+      let candidates = groups;
+      if (mode === 3 && previous) {
+        candidates = groups.filter((g) => !previous.seekerGroups.includes(g));
+        if (!candidates.length) candidates = groups;
+      }
       const seekerGroup =
         candidates[Math.floor(Math.random() * candidates.length)];
       assignment = {
