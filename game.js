@@ -79,6 +79,11 @@
       radarSlow: 0.9,
       radarCooldown: 12.5,
       spikeHitCooldown: 1,
+      dashSlow: 0.75,
+      dashSlowTime: 0.5,
+      tackleStun: 1,
+      tackleBoost: 1.5,
+      tackleBoostTime: 1.5,
     },
     stamina: {
       max: 100,
@@ -382,6 +387,7 @@
   const RESERVED_KEYS = new Set([
     "Escape",
     "KeyP",
+    "KeyC",
     "KeyM",
     "KeyN",
     "Tab",
@@ -1235,6 +1241,10 @@
     dash() {
       tone(240, 0.14, "sawtooth", 0.035, 0, 540);
     },
+    tackle() {
+      tone(300, 0.1, "square", 0.05, 0, 700);
+      tone(160, 0.18, "sawtooth", 0.04, 0.05);
+    },
     radar() {
       tone(320, 0.25, "sine", 0.04, 0, 640);
       tone(640, 0.2, "sine", 0.02, 0.12);
@@ -1269,6 +1279,7 @@
   let endReason = "";
   let overSince = 0;
   let paused = false;
+  let menuOpen = false;
   let menuWasPaused = false;
   let time = 0;
   let ping = null;
@@ -1481,6 +1492,10 @@
       dashT: 0,
       dashX: 0,
       dashY: 0,
+      dashSlowT: 0,
+      boostT: 0,
+      tackled: false,
+      stunT: 0,
       wounded: false,
       woundT: 0,
       bleedT: 0,
@@ -1557,7 +1572,7 @@
     roundAssignments.clear();
     saveMode();
     saveTwoSeekers();
-    if (phase === PHASE.READY) resetEntities();
+    if (phase === PHASE.READY || menuOpen) resetEntities();
     sfx.click();
   }
 
@@ -1570,14 +1585,14 @@
     saveHardMode();
     radars = [];
     ping = null;
-    if (phase === PHASE.READY) resetEntities();
+    if (phase === PHASE.READY || menuOpen) resetEntities();
     sfx.click();
   }
 
   function setAiMode(on) {
     aiMode = Boolean(on);
     saveAiMode();
-    if (phase === PHASE.READY) resetEntities();
+    if (phase === PHASE.READY || menuOpen) resetEntities();
     sfx.click();
   }
 
@@ -1593,7 +1608,7 @@
   }
 
   function setMap(index) {
-    if (phase !== PHASE.READY || menuScreen !== "main") return;
+    if ((phase !== PHASE.READY && !menuOpen) || menuScreen !== "main") return;
     applyMap(((index % MAPS.length) + MAPS.length) % MAPS.length);
     resetEntities();
     sfx.click();
@@ -1602,6 +1617,8 @@
   function toMenu() {
     phase = PHASE.READY;
     menuScreen = "main";
+    menuOpen = false;
+    menuWasPaused = false;
     rebinding = null;
     controlsNotice = 0;
     roundNum = 1;
@@ -1622,6 +1639,8 @@
   function startMatch() {
     roundNum = 1;
     menuScreen = "main";
+    menuOpen = false;
+    menuWasPaused = false;
     rebinding = null;
     startRound();
   }
@@ -1765,10 +1784,31 @@
     }
   });
 
+  function openMenu() {
+    if (phase === PHASE.READY || menuOpen) return;
+    menuOpen = true;
+    menuWasPaused = paused;
+    paused = true;
+    menuScreen = "main";
+    rebinding = null;
+    controlsNotice = 0;
+    pressed.clear();
+    sfx.click();
+  }
+
+  function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    menuScreen = "main";
+    rebinding = null;
+    paused = menuWasPaused;
+    menuWasPaused = false;
+    pressed.clear();
+    sfx.click();
+  }
+
   function openControls() {
     menuScreen = "controls";
-    menuWasPaused = paused;
-    if (phase !== PHASE.READY) paused = true;
     rebinding = null;
     controlsNotice = 0;
     pressed.clear();
@@ -1778,8 +1818,6 @@
   function closeControls() {
     menuScreen = "main";
     rebinding = null;
-    if (phase !== PHASE.READY) paused = menuWasPaused;
-    menuWasPaused = false;
     pressed.clear();
     sfx.click();
   }
@@ -1845,6 +1883,7 @@
     hider.dashT = CFG.hard.dashDuration;
     hider.dashX = dx;
     hider.dashY = dy;
+    hider.tackled = false;
     hider.stamina = Math.max(0, hider.stamina - CFG.hard.dashCost);
     hider.sprinting = false;
     sfx.dash();
@@ -1897,6 +1936,8 @@
     if (k === "escape") {
       if (menuScreen === "controls") {
         closeControls();
+      } else if (menuOpen) {
+        closeMenu();
       } else if (phase === PHASE.HIDE || phase === PHASE.SEEK) {
         paused = !paused;
         pressed.clear();
@@ -1912,6 +1953,7 @@
 
     if (k === "p") {
       if (
+        !menuOpen &&
         menuScreen !== "controls" &&
         (phase === PHASE.HIDE || phase === PHASE.SEEK)
       ) {
@@ -1924,11 +1966,27 @@
 
     if (k === "m") {
       if (menuScreen === "controls") closeControls();
-      else openControls();
+      else if (menuOpen) closeMenu();
+      else openMenu();
+      return;
+    }
+
+    if (k === "c") {
+      if (menuScreen === "controls") closeControls();
+      else if (menuScreen === "main" && (phase === PHASE.READY || menuOpen)) {
+        openControls();
+      }
       return;
     }
 
     if (menuScreen === "controls") return;
+
+    if (menuOpen && (k === " " || k === "enter")) {
+      startMatch();
+      return;
+    }
+
+    if (menuOpen && phase !== PHASE.READY) return;
 
     if (phase === PHASE.READY) {
       if (menuScreen === "controls") {
@@ -2065,7 +2123,7 @@
   }
 
   canvas.addEventListener("click", (e) => {
-    if (phase !== PHASE.READY && menuScreen !== "controls") return;
+    if (phase !== PHASE.READY && !menuOpen && menuScreen !== "controls") return;
     const p = canvasPoint(e);
 
     if (menuScreen === "controls") {
@@ -2099,7 +2157,7 @@
   });
 
   canvas.addEventListener("mousemove", (e) => {
-    if (phase !== PHASE.READY && menuScreen !== "controls") {
+    if (phase !== PHASE.READY && !menuOpen && menuScreen !== "controls") {
       canvas.style.cursor = "default";
       return;
     }
@@ -2179,6 +2237,7 @@
       return;
     }
     if (!ent.alive) return;
+    if (ent.dashT > 0) return;
     if (ent.wounded) {
       catchHider(ent);
       if (aliveHiders() === 0) {
@@ -2424,7 +2483,7 @@
       if (!still) {
         wounded.healT = 0;
         wounded.healer = null;
-        if (wounded.bleedT > 0) {
+        if (wounded.bleedT > 0 && wounded.dashT <= 0) {
           wounded.bleedT = Math.max(0, wounded.bleedT - dt);
           if (wounded.bleedT <= 0) {
             wounded.bleedT = 0;
@@ -2834,6 +2893,9 @@
       if (ent.spikeHitCD > 0) {
         ent.spikeHitCD = Math.max(0, ent.spikeHitCD - dt);
       }
+      if (ent.stunT > 0) {
+        ent.stunT = Math.max(0, ent.stunT - dt);
+      }
     }
     for (const hider of hiders) {
       if (hider.revealT > 0) hider.revealT = Math.max(0, hider.revealT - dt);
@@ -2886,6 +2948,12 @@
       if (hider.spikeHitCD > 0) {
         hider.spikeHitCD = Math.max(0, hider.spikeHitCD - dt);
       }
+      if (hider.dashSlowT > 0) {
+        hider.dashSlowT = Math.max(0, hider.dashSlowT - dt);
+      }
+      if (hider.boostT > 0) {
+        hider.boostT = Math.max(0, hider.boostT - dt);
+      }
       if (hider.teleportT > 0) {
         hider.teleportT = Math.max(0, hider.teleportT - dt);
         hider.vx = 0;
@@ -2934,6 +3002,7 @@
         if (hider.dashT <= 0) {
           hider.vx = 0;
           hider.vy = 0;
+          hider.dashSlowT = CFG.hard.dashSlowTime;
         }
         addTrailPoint(hider);
         continue;
@@ -2947,6 +3016,8 @@
       let mult = 1;
       if (!hider.flashlightOn) mult *= CFG.hider.darkSpeed;
       if (hider.wounded) mult *= CFG.hard.woundedSlow;
+      if (hider.dashSlowT > 0) mult *= CFG.hard.dashSlow;
+      if (hider.boostT > 0) mult *= CFG.hard.tackleBoost;
       if (radars.some((r) => dist(hider, r) <= r.radius)) {
         mult *= CFG.hard.radarSlow;
       }
@@ -3012,6 +3083,12 @@
     }
     if (phase === PHASE.SEEK) {
       for (const ent of activeSeekers()) {
+        if (ent.stunT > 0) {
+          ent.vx = 0;
+          ent.vy = 0;
+          ent.sprinting = false;
+          continue;
+        }
         const slow = ent.spikeSlowT > 0 ? CFG.hard.seekerSlow : 1;
         const seekerStats = {
           walk:
@@ -3044,9 +3121,26 @@
     for (const hider of hiders) {
       if (!hider.alive || hider.teleportT > 0) continue;
       for (const ent of activeSeekers()) {
+        if (ent.stunT > 0) continue;
         if (dist(hider, ent) < CFG.tagDist) {
-          catchHider(hider);
-          caught = true;
+          if (hardMode && hider.dashT > 0) {
+            if (!hider.tackled) {
+              hider.tackled = true;
+              ent.stunT = CFG.hard.tackleStun;
+              ent.vx = 0;
+              ent.vy = 0;
+              ent.sprinting = false;
+              hider.boostT = CFG.hard.tackleBoostTime;
+              burst(ent.x, ent.y, ent.color, 18);
+              burst(hider.x, hider.y, hider.color, 12);
+              toast = { text: "TACKLED!", color: hider.color, t: 0, dur: 1.0 };
+              shake = 6;
+              sfx.tackle();
+            }
+          } else if (hider.dashT <= 0) {
+            catchHider(hider);
+            caught = true;
+          }
           break;
         }
       }
@@ -3905,7 +3999,7 @@
     ctx.font = `700 11px ${FONT}`;
     ctx.fillStyle = "rgba(214, 238, 224, 0.75)";
     ctx.fillText(
-      "MENU · M",
+      "CONTROLS · C",
       MENU.controls.x + MENU.controls.w / 2,
       MENU.controls.y + MENU.controls.h / 2 + 1
     );
@@ -4063,7 +4157,7 @@
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
     ctx.fillText(
-      "M menu · P pause · N mute",
+      "M menu · C controls · P pause · N mute",
       CW / 2,
       638
     );
@@ -4157,7 +4251,7 @@
       ctx.font = `600 12px ${FONT}`;
       ctx.fillStyle = `rgba(255, 209, 102, ${0.9 * alpha})`;
       ctx.fillText(
-        "ESC, P, M, N, TAB and F-keys are reserved.",
+        "ESC, P, C, M, N, TAB and F-keys are reserved.",
         CW / 2,
         522
       );
@@ -4171,7 +4265,7 @@
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.45)";
     ctx.fillText(
-      "Changes save automatically · M/ESC to go back",
+      "Changes save automatically · C/ESC to go back",
       CW / 2,
       632
     );
@@ -4532,16 +4626,19 @@
 
     if (menuScreen === "controls") {
       drawControlsScreen();
-    } else if (phase === PHASE.READY) {
+    } else if (phase === PHASE.READY || menuOpen) {
       drawStartScreen();
     } else if (phase === PHASE.OVER || phase === PHASE.MATCH) {
       drawEndScreen();
     }
 
-    if (phase === PHASE.MATCH && menuScreen !== "controls") drawConfetti();
+    if (phase === PHASE.MATCH && menuScreen !== "controls" && !menuOpen) {
+      drawConfetti();
+    }
 
     if (
       paused &&
+      !menuOpen &&
       menuScreen !== "controls" &&
       (phase === PHASE.HIDE || phase === PHASE.SEEK)
     ) {
