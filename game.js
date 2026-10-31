@@ -1269,6 +1269,7 @@
   let endReason = "";
   let overSince = 0;
   let paused = false;
+  let menuWasPaused = false;
   let time = 0;
   let ping = null;
   let particles = [];
@@ -1766,6 +1767,8 @@
 
   function openControls() {
     menuScreen = "controls";
+    menuWasPaused = paused;
+    if (phase !== PHASE.READY) paused = true;
     rebinding = null;
     controlsNotice = 0;
     pressed.clear();
@@ -1775,6 +1778,9 @@
   function closeControls() {
     menuScreen = "main";
     rebinding = null;
+    if (phase !== PHASE.READY) paused = menuWasPaused;
+    menuWasPaused = false;
+    pressed.clear();
     sfx.click();
   }
 
@@ -1889,12 +1895,12 @@
     }
 
     if (k === "escape") {
-      if (phase === PHASE.HIDE || phase === PHASE.SEEK) {
+      if (menuScreen === "controls") {
+        closeControls();
+      } else if (phase === PHASE.HIDE || phase === PHASE.SEEK) {
         paused = !paused;
         pressed.clear();
         sfx.click();
-      } else if (phase === PHASE.READY) {
-        if (menuScreen === "controls") closeControls();
       } else if (
         (phase === PHASE.OVER || phase === PHASE.MATCH) &&
         overSince > 0.55
@@ -1905,7 +1911,10 @@
     }
 
     if (k === "p") {
-      if (phase === PHASE.HIDE || phase === PHASE.SEEK) {
+      if (
+        menuScreen !== "controls" &&
+        (phase === PHASE.HIDE || phase === PHASE.SEEK)
+      ) {
         paused = !paused;
         pressed.clear();
         sfx.click();
@@ -1914,12 +1923,12 @@
     }
 
     if (k === "m") {
-      if (phase === PHASE.READY) {
-        if (menuScreen === "controls") closeControls();
-        else openControls();
-      }
+      if (menuScreen === "controls") closeControls();
+      else openControls();
       return;
     }
+
+    if (menuScreen === "controls") return;
 
     if (phase === PHASE.READY) {
       if (menuScreen === "controls") {
@@ -2056,7 +2065,7 @@
   }
 
   canvas.addEventListener("click", (e) => {
-    if (phase !== PHASE.READY) return;
+    if (phase !== PHASE.READY && menuScreen !== "controls") return;
     const p = canvasPoint(e);
 
     if (menuScreen === "controls") {
@@ -2090,7 +2099,7 @@
   });
 
   canvas.addEventListener("mousemove", (e) => {
-    if (phase !== PHASE.READY) {
+    if (phase !== PHASE.READY && menuScreen !== "controls") {
       canvas.style.cursor = "default";
       return;
     }
@@ -4521,16 +4530,21 @@
     drawHud();
     drawMuteBadge();
 
-    if (phase === PHASE.READY) {
-      if (menuScreen === "controls") drawControlsScreen();
-      else drawStartScreen();
+    if (menuScreen === "controls") {
+      drawControlsScreen();
+    } else if (phase === PHASE.READY) {
+      drawStartScreen();
     } else if (phase === PHASE.OVER || phase === PHASE.MATCH) {
       drawEndScreen();
     }
 
-    if (phase === PHASE.MATCH) drawConfetti();
+    if (phase === PHASE.MATCH && menuScreen !== "controls") drawConfetti();
 
-    if (paused && (phase === PHASE.HIDE || phase === PHASE.SEEK)) {
+    if (
+      paused &&
+      menuScreen !== "controls" &&
+      (phase === PHASE.HIDE || phase === PHASE.SEEK)
+    ) {
       drawPauseOverlay();
     }
   }
