@@ -98,7 +98,7 @@
   const SEEKER_LIGHT_MODES = [
     { cone: 35, rangeMult: 1.5 },
     { cone: 75, rangeMult: 1 },
-    { cone: 360, rangeMult: 0.45 },
+    { cone: 360, rangeMult: 0.3 },
   ];
 
   let WALLS = [
@@ -4003,8 +4003,8 @@
     );
     ctx.fillText(
       isDuo
-        ? "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.45× (reveals through walls) · roles change."
-        : "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.45× (reveals through walls) · roles change.",
+        ? "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.3× (reveals through walls) · roles change."
+        : "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.3× (reveals through walls) · roles change.",
       CW / 2,
       534
     );
