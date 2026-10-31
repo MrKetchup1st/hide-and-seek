@@ -1,0 +1,66 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #b8b8b8;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.wrap {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 2vmin;
+}
+
+canvas {
+  display: block;
+  width: min(calc(100vw - 4vmin), calc((100vh - 4vmin) * 1.47059));
+  width: min(calc(100vw - 4vmin), calc((100dvh - 4vmin) * 1.47059));
+  height: auto;
+  aspect-ratio: 1000 / 680;
+  border-radius: 0;
+  background: #000;
+  image-rendering: auto;
+  outline: 5px solid #000;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.noscript {
+  position: fixed;
+  inset: auto 0 24px;
+  text-align: center;
+  color: rgba(234, 245, 238, 0.8);
+  font-size: 14px;
+}

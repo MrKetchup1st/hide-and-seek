@@ -1,0 +1,19 @@
+{
+  "name": "Hide & Seek — Local Multiplayer",
+  "short_name": "Hide & Seek",
+  "description": "Two or three players, one keyboard. Hide in buildings and bushes, ping the map, tag your friends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#08110c",
+  "theme_color": "#08110c",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

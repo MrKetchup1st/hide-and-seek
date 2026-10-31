@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>Hide &amp; Seek — Local Multiplayer</title>
+
+  <meta
+    name="description"
+    content="A local 2 or 3-player hide and seek game. Hiders vanish into buildings and bushes while the seeker hunts with a ping. Play on one keyboard."
+  />
+  <meta name="application-name" content="Hide &amp; Seek" />
+  <meta name="theme-color" content="#08110c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Hide &amp; Seek" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Hide &amp; Seek — local multiplayer game" />
+  <meta
+    property="og:description"
+    content="Two or three players, one keyboard. Hide in buildings and bushes, ping the map, tag your friends."
+  />
+  <meta property="og:image" content="./icon.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Hide &amp; Seek — local multiplayer game" />
+  <meta
+    name="twitter:description"
+    content="Two or three players, one keyboard. Hide in buildings and bushes, ping the map, tag your friends."
+  />
+
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <h1 class="sr-only">Hide &amp; Seek — a local multiplayer game</h1>
+
+  <main class="wrap">
+    <canvas
+      id="game"
+      width="1000"
+      height="680"
+      role="application"
+      aria-label="Hide and Seek game for two or three players. Hider one uses W A S D and left Shift, hider two uses I J K L and period. The seeker uses arrow keys, right Shift and Space."
+    ></canvas>
+  </main>
+
+  <noscript>
+    <p class="noscript">Hide &amp; Seek needs JavaScript enabled to play.</p>
+  </noscript>
+
+  <script src="./game.js" defer></script>
+</body>
+</html>
