@@ -40,8 +40,9 @@
   const LOOKBACK_TIME = 1;
 
   const RULES = {
-    2: { headStart: 6, seekTime: 35 },
-    3: { headStart: 8, seekTime: 45 },
+    2: { headStart: 6, seekTime: 40 },
+    3: { headStart: 8, seekTime: 60 },
+    twoSeekers: { headStart: 8, seekTime: 40 },
   };
 
   const CFG = {
@@ -1386,7 +1387,7 @@
   }
 
   function rules() {
-    return RULES[mode];
+    return twoSeekers && mode === 3 ? RULES.twoSeekers : RULES[mode];
   }
 
   function aliveHiders() {
