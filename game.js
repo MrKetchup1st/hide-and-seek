@@ -1249,6 +1249,10 @@
     click() {
       tone(660, 0.04, "square", 0.015);
     },
+    lightSwitch() {
+      tone(240, 0.03, "square", 0.022);
+      tone(90, 0.05, "square", 0.018, 0.025);
+    },
   };
 
   // ---------------------------------------------------------------------------
@@ -1840,20 +1844,31 @@
     return true;
   }
 
+  function setFlashlight(ent, on) {
+    if (ent.flashlightOn === on) return;
+    ent.flashlightOn = on;
+    sfx.lightSwitch();
+  }
+
+  function setLightMode(ent, mode) {
+    if (ent.lightMode === mode) return;
+    ent.lightMode = mode;
+    sfx.lightSwitch();
+  }
+
   function toggleFlashlightForKey(code) {
     for (const ent of activeSeekers()) {
       if (code === controls[ent.ctrl].light) {
         ent.flashlightOn = true;
         ent.lightMode = (ent.lightMode + 1) % SEEKER_LIGHT_MODES.length;
-        sfx.click();
+        sfx.lightSwitch();
         return true;
       }
     }
     for (const hider of hiders) {
       if (!hider.alive) continue;
       if (code === controls[hider.ctrl].light) {
-        hider.flashlightOn = !hider.flashlightOn;
-        sfx.click();
+        setFlashlight(hider, !hider.flashlightOn);
         return true;
       }
     }
@@ -2605,7 +2620,7 @@
             ? { x: 0, y: 0 }
             : aiProbeDir(hider, healer.x, healer.y);
         hider.aiSprint = false;
-        hider.flashlightOn = false;
+        setFlashlight(hider, false);
         continue;
       }
       if (!hider.wounded && !danger) {
@@ -2619,7 +2634,7 @@
               ? { x: 0, y: 0 }
               : aiProbeDir(hider, woundedOther.x, woundedOther.y);
           hider.aiSprint = false;
-          hider.flashlightOn = false;
+          setFlashlight(hider, false);
           continue;
         }
       }
@@ -2635,7 +2650,7 @@
         const tx = hider.x + dx * 220 - dy * side * spread;
         const ty = hider.y + dy * 220 + dx * side * spread;
         hider.aiDir = aiProbeDir(hider, tx, ty);
-        hider.flashlightOn = false;
+        setFlashlight(hider, false);
         if (hardMode) {
           hider.aiSprint = false;
           if (
@@ -2650,7 +2665,7 @@
         }
         continue;
       }
-      hider.flashlightOn = !hider.insideHide;
+      setFlashlight(hider, !hider.insideHide);
       hider.aiSprint = false;
       if (hider.insideHide) {
         hider.aiDir.x = 0;
@@ -2676,7 +2691,7 @@
         if (d < 16) {
           hider.aiDir.x = 0;
           hider.aiDir.y = 0;
-          hider.flashlightOn = false;
+          setFlashlight(hider, false);
         } else {
           hider.aiDir = aiProbeDir(hider, cx, cy);
           hider.aiSprint = hider.stamina > 35 && d > 40;
@@ -2725,7 +2740,7 @@
         tryPing(ent);
       }
       const d = Math.hypot(target.x - ent.x, target.y - ent.y);
-      ent.lightMode = d > 280 ? 0 : d < 140 ? 2 : 1;
+      setLightMode(ent, d > 280 ? 0 : d < 140 ? 2 : 1);
       ent.aiDir =
         d < 12 ? { x: 0, y: 0 } : aiProbeDir(ent, target.x, target.y);
       ent.aiSprint = false;
@@ -3880,7 +3895,7 @@
     ctx.font = `700 11px ${FONT}`;
     ctx.fillStyle = "rgba(214, 238, 224, 0.75)";
     ctx.fillText(
-      "CONTROLS",
+      "MENU · M",
       MENU.controls.x + MENU.controls.w / 2,
       MENU.controls.y + MENU.controls.h / 2 + 1
     );
