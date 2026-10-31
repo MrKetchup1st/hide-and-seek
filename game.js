@@ -74,10 +74,10 @@
       healTime: 2.5,
       healDist: 42,
       stillSpeed: 16,
-      radarLife: 30,
-      radarRange: 180,
+      radarLife: 15,
+      radarRange: 225,
       radarSlow: 0.9,
-      radarCooldown: 20,
+      radarCooldown: 12.5,
       spikeHitCooldown: 1,
     },
     stamina: {
@@ -96,9 +96,9 @@
   };
 
   const SEEKER_LIGHT_MODES = [
-    { cone: 40, rangeMult: 1.6 },
-    { cone: 75, rangeMult: 0.75 },
-    { cone: 360, rangeMult: 0.5 },
+    { cone: 35, rangeMult: 1.5 },
+    { cone: 75, rangeMult: 1 },
+    { cone: 360, rangeMult: 0.45 },
   ];
 
   let WALLS = [
@@ -2816,6 +2816,18 @@
 
     if (aiMode) updateAI(dt);
 
+    for (const ent of activeSeekers()) {
+      if (ent.lightMode !== 2 || !ent.flashlightOn) continue;
+      const radius =
+        FLASHLIGHT.range * SEEKER_LIGHT_MODES[2].rangeMult;
+      for (const hider of hiders) {
+        if (!hider.alive) continue;
+        if (dist(hider, ent) <= radius) {
+          hider.revealT = CFG.pingReveal;
+        }
+      }
+    }
+
     phaseLeft -= dt;
     if (phase === PHASE.SEEK) {
       if (!seekerBoostTriggered && phaseLeft <= 10.5) {
@@ -3120,7 +3132,12 @@
           : modeIndex === 1
           ? beams.seekerWide
           : beams.seekerLong;
-      addPlayerLight(ent, sprite, FLASHLIGHT.range * mode.rangeMult);
+      addPlayerLight(
+        ent,
+        sprite,
+        FLASHLIGHT.range * mode.rangeMult,
+        modeIndex === 2
+      );
     }
     for (const hider of hiders) {
       if (!hider.alive || hider.insideHide) continue;
@@ -3148,7 +3165,7 @@
     ctx.drawImage(darknessCanvas, shakeX, HUD_H + shakeY, VIEW_W, VIEW_H);
   }
 
-  function addPlayerLight(ent, sprite, range) {
+  function addPlayerLight(ent, sprite, range, throughWalls) {
     if (!ent.flashlightOn) return;
     const l = lightCtx;
     l.setTransform(1, 0, 0, 1, 0, 0);
@@ -3160,13 +3177,15 @@
     drawFlashlight(l, ent, sprite, range);
     drawSelfLight(l, ent);
 
-    l.globalCompositeOperation = "destination-out";
-    eraseWallShadows(l, ent.x * VIEW_SCALE, ent.y * VIEW_SCALE);
-    l.globalCompositeOperation = "source-over";
-    restoreWallFaces(l, (c) => {
-      drawFlashlight(c, ent, sprite, range);
-      drawSelfLight(c, ent);
-    });
+    if (!throughWalls) {
+      l.globalCompositeOperation = "destination-out";
+      eraseWallShadows(l, ent.x * VIEW_SCALE, ent.y * VIEW_SCALE);
+      l.globalCompositeOperation = "source-over";
+      restoreWallFaces(l, (c) => {
+        drawFlashlight(c, ent, sprite, range);
+        drawSelfLight(c, ent);
+      });
+    }
 
     darknessCtx.globalCompositeOperation = "destination-out";
     darknessCtx.drawImage(lightCanvas, 0, 0, VIEW_W, VIEW_H);
@@ -3984,8 +4003,8 @@
     );
     ctx.fillText(
       isDuo
-        ? "Hiders 30° / 0.7× range · Seekers 40°/1.6×, 75°/0.75×, or 360°/0.5× · roles change each round."
-        : "Hiders 30° / 0.7× range · Seeker 40°/1.6×, 75°/0.75×, or 360°/0.5× · roles change each round.",
+        ? "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.45× (reveals through walls) · roles change."
+        : "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.45× (reveals through walls) · roles change.",
       CW / 2,
       534
     );
