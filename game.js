@@ -40,8 +40,8 @@
   const LOOKBACK_TIME = 1;
 
   const RULES = {
-    2: { headStart: 6, seekTime: 40 },
-    3: { headStart: 8, seekTime: 60 },
+    2: { headStart: 6, seekTime: 75 },
+    3: { headStart: 8, seekTime: 150 },
     twoSeekers: { headStart: 8, seekTime: 35 },
   };
 
