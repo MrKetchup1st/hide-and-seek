@@ -5,11 +5,11 @@
   // World & rules
   // ---------------------------------------------------------------------------
 
-  const W = 1900;
-  const H = 1140;
+  let W = 1900;
+  let H = 1140;
   const VIEW_W = 1000;
   const VIEW_H = 600;
-  const VIEW_SCALE = VIEW_W / W;
+  let VIEW_SCALE = VIEW_W / W;
   const RENDER_SCALE = 1;
   const STATIC_DPR = RENDER_SCALE;
   const POTATO = true;
@@ -23,8 +23,15 @@
   const GREEN = "#5ee08a";
   const TEAL = "#5ee0d8";
   const RED = "#ff6b6b";
-  const PLAYER_COLORS = { h1: GREEN, h2: TEAL, seeker: RED };
+  const PLAYER_COLORS = { h1: GREEN, h2: TEAL, p4: "#ffd166", seeker: RED };
   const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+  const ONLINE_GROUPS = ["h1", "h2", "p4", "seeker"];
+  const ONLINE_MAX = 4;
+  const ONLINE_CODE_LEN = 6;
+  const ONLINE_STATE_HZ = 30;
+  const ONLINE_INPUT_HZ = 20;
+  const ONLINE_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
   const PHASE = {
     READY: "ready",
@@ -42,8 +49,12 @@
   const RULES = {
     2: { headStart: 6, seekTime: 75 },
     3: { headStart: 8, seekTime: 150 },
+    4: { headStart: 8, seekTime: 180 },
     twoSeekers: { headStart: 8, seekTime: 35 },
   };
+
+  const TAG_RULES = { headStart: 5, seekTime: 90 };
+  const TAG_RULES_4 = { headStart: 5, seekTime: 120 };
 
   const CFG = {
     tagDist: 43,
@@ -91,6 +102,20 @@
       regen: 20,
       recoverDelay: 0.6,
       min: 25,
+    },
+    tag: {
+      hiderWalk: 300,
+      seekerWalk: 315,
+      mudSlow: 0.55,
+      grassSlow: 0.8,
+      cone: 60,
+      coneRange: 320,
+      coneSlow: 0.85,
+      coneSlowTime: 0.25,
+      revealDist: 110,
+      transferStun: 1,
+      transferBoost: 2,
+      transferBoostTime: 2,
     },
   };
 
@@ -152,6 +177,7 @@
     hiders: [
       { x: 650, y: 300 },
       { x: 730, y: 480 },
+      { x: 800, y: 430 },
     ],
     seeker: { x: 85, y: 85 },
     seeker2: { x: 150, y: 85 },
@@ -191,6 +217,7 @@
     hiders: [
       { x: 800, y: 300 },
       { x: 800, y: 650 },
+      { x: 820, y: 520 },
     ],
     seeker: { x: 200, y: 300 },
     seeker2: { x: 200, y: 350 },
@@ -227,6 +254,7 @@
     hiders: [
       { x: 850, y: 300 },
       { x: 850, y: 650 },
+      { x: 870, y: 610 },
     ],
     seeker: { x: 250, y: 300 },
     seeker2: { x: 400, y: 300 },
@@ -257,6 +285,7 @@
     hiders: [
       { x: 800, y: 300 },
       { x: 800, y: 700 },
+      { x: 800, y: 475 },
     ],
     seeker: { x: 250, y: 300 },
     seeker2: { x: 400, y: 300 },
@@ -267,9 +296,60 @@
     { x: 1760, y: 990, w: 60, h: 90 },
   ];
 
+  const FIELD_WALLS = [
+    { x: 420, y: 240, w: 360, h: 26 },
+    { x: 420, y: 240, w: 26, h: 220 },
+    { x: 860, y: 200, w: 26, h: 300 },
+    { x: 1060, y: 420, w: 320, h: 26 },
+    { x: 1480, y: 240, w: 300, h: 26 },
+    { x: 1480, y: 240, w: 26, h: 260 },
+    { x: 1900, y: 240, w: 280, h: 26 },
+    { x: 2180, y: 240, w: 26, h: 260 },
+    { x: 640, y: 620, w: 300, h: 26 },
+    { x: 640, y: 620, w: 26, h: 220 },
+    { x: 1120, y: 760, w: 360, h: 26 },
+    { x: 1700, y: 620, w: 26, h: 260 },
+    { x: 1980, y: 700, w: 300, h: 26 },
+    { x: 420, y: 980, w: 26, h: 260 },
+    { x: 620, y: 1160, w: 320, h: 26 },
+    { x: 1060, y: 1060, w: 26, h: 240 },
+    { x: 1300, y: 1240, w: 360, h: 26 },
+    { x: 1800, y: 1060, w: 26, h: 260 },
+    { x: 2080, y: 1180, w: 300, h: 26 },
+    { x: 1980, y: 460, w: 26, h: 200 },
+  ];
+
+  const FIELD_HIDES = [
+    { x: 950, y: 420, w: 100, h: 80, type: "bush" },
+    { x: 2040, y: 900, w: 110, h: 90, type: "bush" },
+  ];
+
+  const FIELD_MUD = [
+    { x: 700, y: 420, rx: 110, ry: 70 },
+    { x: 1600, y: 760, rx: 120, ry: 75 },
+  ];
+
+  const FIELD_TALL_GRASS = [
+    { x: 250, y: 160, w: 220, h: 180, variant: 0 },
+    { x: 1250, y: 200, w: 260, h: 200, variant: 1 },
+    { x: 2200, y: 800, w: 240, h: 220, variant: 2 },
+  ];
+
+  const FIELD_SPAWN = {
+    hiders: [
+      { x: 1300, y: 640 },
+      { x: 1360, y: 900 },
+      { x: 1200, y: 1080 },
+    ],
+    seeker: { x: 250, y: 430 },
+    seeker2: { x: 370, y: 430 },
+  };
+
   const MAPS = [
     {
       name: "CAMP",
+      w: 1900,
+      h: 1140,
       walls: WALLS,
       hides: HIDES,
       spawn: SPAWN,
@@ -278,6 +358,8 @@
     },
     {
       name: "YARD",
+      w: 1900,
+      h: 1140,
       walls: YARD_WALLS,
       hides: YARD_HIDES,
       spawn: YARD_SPAWN,
@@ -286,6 +368,8 @@
     },
     {
       name: "DEPOT",
+      w: 1900,
+      h: 1140,
       walls: DEPOT_WALLS,
       hides: DEPOT_HIDES,
       spawn: DEPOT_SPAWN,
@@ -294,11 +378,27 @@
     },
     {
       name: "GATE",
+      w: 1900,
+      h: 1140,
       walls: GATE_WALLS,
       hides: GATE_HIDES,
       spawn: GATE_SPAWN,
       lamps: [{ x: 950, y: 700, radius: 160 }],
       doors: GATE_DOORS,
+    },
+    {
+      name: "FIELD",
+      w: 2600,
+      h: 1560,
+      walls: FIELD_WALLS,
+      hides: FIELD_HIDES,
+      spawn: FIELD_SPAWN,
+      lamps: [],
+      doors: [],
+      mud: FIELD_MUD,
+      tallGrass: FIELD_TALL_GRASS,
+      field: true,
+      tagOnly: true,
     },
   ];
   for (const map of MAPS) {
@@ -307,20 +407,42 @@
     });
   }
 
+  const FIELD_INDEX = MAPS.findIndex((map) => map.tagOnly);
+
   let mapIndex = 0;
   let LAMPS = MAPS[0].lamps;
   let DOORS = MAPS[0].doors;
+  let MUD = MAPS[0].mud || [];
+  let TALL_GRASS = MAPS[0].tallGrass || [];
+  let CONCEAL_SPOTS = MAPS[0].hides;
 
   const MENU = {
     map: { x: 20, y: 12, w: 132, h: 30 },
     hard: { x: 160, y: 12, w: 100, h: 30 },
     ai: { x: 268, y: 12, w: 100, h: 30 },
-    b2: { x: 20, y: 48, w: 120, h: 30 },
-    b3: { x: 148, y: 48, w: 120, h: 30 },
-    duo: { x: 276, y: 48, w: 132, h: 30 },
+    b2: { x: 20, y: 48, w: 108, h: 30 },
+    b3: { x: 136, y: 48, w: 108, h: 30 },
+    four: { x: 252, y: 48, w: 108, h: 30 },
+    duo: { x: 368, y: 48, w: 120, h: 30 },
+    tag: { x: 496, y: 48, w: 92, h: 30 },
     fullscreen: { x: 780, y: 596, w: 190, h: 34 },
     start: { x: 300, y: 560, w: 400, h: 50 },
     controls: { x: 815, y: 22, w: 155, h: 36 },
+    online: { x: 600, y: 48, w: 120, h: 30 },
+  };
+
+  const ONLINE_UI = {
+    create: { x: 300, y: 222, w: 400, h: 52 },
+    join: { x: 300, y: 286, w: 400, h: 52 },
+    back: { x: 300, y: 350, w: 400, h: 44 },
+    codeBox: { x: 250, y: 216, w: 500, h: 66 },
+    codeJoin: { x: 300, y: 302, w: 400, h: 52 },
+    codeBack: { x: 300, y: 366, w: 400, h: 44 },
+    start: { x: 300, y: 548, w: 400, h: 52 },
+    tag: { x: 300, y: 476, w: 180, h: 34 },
+    map: { x: 500, y: 476, w: 200, h: 34 },
+    leave: { x: 300, y: 608, w: 400, h: 40 },
+    copy: { x: 610, y: 200, w: 120, h: 34 },
   };
 
   const DEFAULT_CONTROLS = {
@@ -351,6 +473,15 @@
       ping: "Space",
       light: "Enter",
     },
+    p4: {
+      up: "Numpad8",
+      down: "Numpad2",
+      left: "Numpad4",
+      right: "Numpad6",
+      sprint: "Numpad0",
+      light: "Numpad7",
+      ping: "Numpad9",
+    },
   };
 
   const CONTROL_GROUPS = [
@@ -370,6 +501,12 @@
       key: "seeker",
       title: "PLAYER 3",
       color: RED,
+      actions: ["up", "down", "left", "right", "sprint", "light", "ping"],
+    },
+    {
+      key: "p4",
+      title: "PLAYER 4",
+      color: "#ffd166",
       actions: ["up", "down", "left", "right", "sprint", "light", "ping"],
     },
   ];
@@ -425,6 +562,12 @@
 
   function pointInRect(x, y, r) {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  }
+
+  function pointInEllipse(x, y, e) {
+    const dx = (x - e.x) / e.rx;
+    const dy = (y - e.y) / e.ry;
+    return dx * dx + dy * dy <= 1;
   }
 
   function roundRectPath(x, y, w, h, r, c) {
@@ -484,7 +627,13 @@
   }
 
   function playerName(group) {
-    return group === "h1" ? "PLAYER 1" : group === "h2" ? "PLAYER 2" : "PLAYER 3";
+    return group === "h1"
+      ? "PLAYER 1"
+      : group === "h2"
+      ? "PLAYER 2"
+      : group === "p4"
+      ? "PLAYER 4"
+      : "PLAYER 3";
   }
 
   // ---------------------------------------------------------------------------
@@ -862,34 +1011,239 @@
     g.stroke();
   }
 
-  function buildStaticArena(walls, hides, art, lamps, doors) {
+  function drawFieldGround(g, worldW, worldH) {
+    const grad = g.createLinearGradient(0, 0, 0, worldH);
+    grad.addColorStop(0, "#5a9a4e");
+    grad.addColorStop(0.55, "#4c8b44");
+    grad.addColorStop(1, "#3f7d3a");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, worldW, worldH);
+
+    g.save();
+    g.globalAlpha = 0.05;
+    g.fillStyle = "#eaffd8";
+    for (let x = -worldH; x < worldW; x += 240) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + worldH, worldH);
+      g.lineTo(x + worldH + 120, worldH);
+      g.lineTo(x + 120, 0);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
+
+    const r = seeded(20261102);
+    for (let i = 0; i < 1400; i++) {
+      const x = r() * worldW;
+      const y = r() * worldH;
+      g.strokeStyle =
+        r() < 0.5 ? "rgba(120, 190, 100, 0.18)" : "rgba(36, 92, 40, 0.2)";
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + (r() - 0.5) * 3, y - 2 - r() * 4);
+      g.stroke();
+    }
+
+    g.strokeStyle = "#1d2a18";
+    g.lineWidth = M;
+    g.strokeRect(M / 2, M / 2, worldW - M, worldH - M);
+    g.strokeStyle = "rgba(255, 255, 255, 0.08)";
+    g.lineWidth = 1;
+    g.strokeRect(M + 0.5, M + 0.5, worldW - M * 2 - 1, worldH - M * 2 - 1);
+  }
+
+  function drawMudStatic(g, mud) {
+    for (let i = 0; i < mud.length; i++) {
+      const p = mud[i];
+      const r = seeded(7000 + i * 71);
+      g.save();
+      g.fillStyle = "rgba(70, 52, 32, 0.92)";
+      g.beginPath();
+      g.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, TAU);
+      g.fill();
+      g.fillStyle = "rgba(92, 68, 42, 0.75)";
+      g.beginPath();
+      g.ellipse(p.x - 6, p.y - 6, p.rx * 0.78, p.ry * 0.72, 0, 0, TAU);
+      g.fill();
+      g.strokeStyle = "rgba(38, 28, 16, 0.65)";
+      g.lineWidth = 3;
+      g.beginPath();
+      g.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, TAU);
+      g.stroke();
+      for (let k = 0; k < 7; k++) {
+        const a = r() * TAU;
+        const d = r() * 0.8;
+        const bx = p.x + Math.cos(a) * p.rx * d;
+        const by = p.y + Math.sin(a) * p.ry * d;
+        g.fillStyle = "rgba(140, 170, 120, 0.28)";
+        g.beginPath();
+        g.arc(bx, by, 2 + r() * 4, 0, TAU);
+        g.fill();
+      }
+      g.strokeStyle = "rgba(190, 210, 160, 0.22)";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.ellipse(
+        p.x - p.rx * 0.2,
+        p.y - p.ry * 0.25,
+        p.rx * 0.5,
+        p.ry * 0.32,
+        0.4,
+        Math.PI * 1.05,
+        Math.PI * 1.75
+      );
+      g.stroke();
+      g.restore();
+    }
+  }
+
+  const TALL_GRASS_STYLES = [
+    {
+      fill: "rgba(28, 74, 36, 0.42)",
+      edge: "rgba(20, 58, 28, 0.35)",
+      bladeA: "rgba(68, 140, 70, 0.55)",
+      bladeB: "rgba(34, 96, 44, 0.6)",
+      count: 90,
+      hMin: 5,
+      hMax: 16,
+      fgCount: 95,
+      fgHMin: 7,
+      fgHMax: 17,
+      sway: 2.2,
+      amp: 3,
+    },
+    {
+      fill: "rgba(58, 92, 30, 0.45)",
+      edge: "rgba(40, 64, 20, 0.35)",
+      bladeA: "rgba(112, 158, 58, 0.55)",
+      bladeB: "rgba(60, 110, 36, 0.6)",
+      count: 112,
+      hMin: 6,
+      hMax: 18,
+      fgCount: 122,
+      fgHMin: 8,
+      fgHMax: 21,
+      sway: 1.7,
+      amp: 2.4,
+    },
+    {
+      fill: "rgba(18, 62, 46, 0.46)",
+      edge: "rgba(12, 44, 32, 0.35)",
+      bladeA: "rgba(56, 150, 110, 0.5)",
+      bladeB: "rgba(24, 94, 70, 0.62)",
+      count: 70,
+      hMin: 4,
+      hMax: 13,
+      fgCount: 80,
+      fgHMin: 6,
+      fgHMax: 15,
+      sway: 2.8,
+      amp: 3.6,
+    },
+  ];
+
+  function tallGrassStyle(patch) {
+    return TALL_GRASS_STYLES[(patch.variant || 0) % TALL_GRASS_STYLES.length];
+  }
+
+  function drawTallGrassStatic(g, grass) {
+    for (let i = 0; i < grass.length; i++) {
+      const p = grass[i];
+      const style = tallGrassStyle(p);
+      const r = seeded(9000 + i * 103);
+      g.save();
+      g.fillStyle = style.fill;
+      g.fillRect(p.x, p.y, p.w, p.h);
+      g.strokeStyle = style.edge;
+      g.lineWidth = 2;
+      g.strokeRect(p.x + 1, p.y + 1, p.w - 2, p.h - 2);
+      for (let k = 0; k < style.count; k++) {
+        const x = p.x + r() * p.w;
+        const y = p.y + r() * p.h;
+        const hgt = style.hMin + r() * (style.hMax - style.hMin);
+        g.strokeStyle = r() < 0.5 ? style.bladeA : style.bladeB;
+        g.lineWidth = 1.1;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x + (r() - 0.5) * 4, y - hgt);
+        g.stroke();
+      }
+      g.restore();
+    }
+  }
+
+  function drawTallGrassForeground() {
+    if (!TALL_GRASS.length) return;
+    ctx.save();
+    for (let i = 0; i < TALL_GRASS.length; i++) {
+      const p = TALL_GRASS[i];
+      const style = tallGrassStyle(p);
+      const r = seeded(9000 + i * 103);
+      for (let k = 0; k < style.fgCount; k++) {
+        const x = p.x + r() * p.w;
+        const y = p.y + r() * p.h;
+        const hgt =
+          style.fgHMin + r() * (style.fgHMax - style.fgHMin);
+        const sway =
+          Math.sin(time * style.sway + x * 0.02 + i) * style.amp;
+        ctx.strokeStyle = k % 3 === 0 ? style.bladeA : style.bladeB;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + sway, y - hgt);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function buildStaticArena(map) {
+    const worldW = map.w || W;
+    const worldH = map.h || H;
+    const hides = map.hides;
+    const walls = map.walls;
+    const lamps = map.lamps || [];
+    const doors = map.doors || [];
+    const art = buildHideArt(hides);
     const c = document.createElement("canvas");
     c.width = Math.round(VIEW_W * STATIC_DPR);
     c.height = Math.round(VIEW_H * STATIC_DPR);
     const g = c.getContext("2d", { alpha: false });
-    const scale = VIEW_SCALE * STATIC_DPR;
+    const scale = (VIEW_W / worldW) * STATIC_DPR;
     g.scale(scale, scale);
     g.imageSmoothingEnabled = true;
 
-    if (POTATO) {
+    if (map.field) {
+      drawFieldGround(g, worldW, worldH);
+      drawMudStatic(g, map.mud || []);
+      drawTallGrassStatic(g, map.tallGrass || []);
+      for (let i = 0; i < hides.length; i++) {
+        const spot = hides[i];
+        if (spot.type === "building") drawBuildingStatic(g, spot, i);
+        else drawBushStatic(g, spot, art[i]);
+      }
+      for (const wall of walls) drawWallStatic(g, wall);
+    } else if (POTATO) {
       g.fillStyle = "#46503e";
-      g.fillRect(0, 0, W, H);
+      g.fillRect(0, 0, worldW, worldH);
       g.strokeStyle = "#37402f";
       g.lineWidth = 3;
       g.beginPath();
-      for (let x = 0; x <= W; x += 100) {
+      for (let x = 0; x <= worldW; x += 100) {
         g.moveTo(x, 0);
-        g.lineTo(x, H);
+        g.lineTo(x, worldH);
       }
-      for (let y = 0; y <= H; y += 100) {
+      for (let y = 0; y <= worldH; y += 100) {
         g.moveTo(0, y);
-        g.lineTo(W, y);
+        g.lineTo(worldW, y);
       }
       g.stroke();
 
       g.strokeStyle = "#141414";
       g.lineWidth = M;
-      g.strokeRect(M / 2, M / 2, W - M, H - M);
+      g.strokeRect(M / 2, M / 2, worldW - M, worldH - M);
 
       for (let i = 0; i < hides.length; i++) {
         const spot = hides[i];
@@ -934,14 +1288,19 @@
         g.strokeRect(wall.x, wall.y, wall.w, wall.h);
       }
     } else {
-      g.drawImage(background, 0, 0);
+      g.drawImage(background, 0, 0, worldW, worldH);
 
       g.strokeStyle = "#16231c";
       g.lineWidth = M;
-      g.strokeRect(M / 2, M / 2, W - M, H - M);
+      g.strokeRect(M / 2, M / 2, worldW - M, worldH - M);
       g.strokeStyle = "rgba(255, 255, 255, 0.07)";
       g.lineWidth = 1;
-      g.strokeRect(M + 0.5, M + 0.5, W - M * 2 - 1, H - M * 2 - 1);
+      g.strokeRect(
+        M + 0.5,
+        M + 0.5,
+        worldW - M * 2 - 1,
+        worldH - M * 2 - 1
+      );
 
       for (let i = 0; i < hides.length; i++) {
         const spot = hides[i];
@@ -960,23 +1319,15 @@
     return c;
   }
 
-  const mapArenas = MAPS.map((map) =>
-    buildStaticArena(
-      map.walls,
-      map.hides,
-      buildHideArt(map.hides),
-      map.lamps,
-      map.doors || []
-    )
-  );
+  const mapArenas = MAPS.map((map) => buildStaticArena(map));
   let staticArena = mapArenas[0];
 
-  function buildSpikeArena(walls) {
+  function buildSpikeArena(walls, worldW, worldH) {
     const c = document.createElement("canvas");
     c.width = Math.round(VIEW_W * STATIC_DPR);
     c.height = Math.round(VIEW_H * STATIC_DPR);
     const g = c.getContext("2d");
-    const scale = VIEW_SCALE * STATIC_DPR;
+    const scale = (VIEW_W / worldW) * STATIC_DPR;
     g.scale(scale, scale);
     g.fillStyle = "#c7d0d4";
     g.strokeStyle = "#111";
@@ -1022,7 +1373,9 @@
     return c;
   }
 
-  const spikeArenas = MAPS.map((map) => buildSpikeArena(map.walls));
+  const spikeArenas = MAPS.map((map) =>
+    buildSpikeArena(map.walls, map.w || W, map.h || H)
+  );
   let spikeArena = spikeArenas[0];
 
   function makeBeamSprite(coneDeg) {
@@ -1076,6 +1429,7 @@
 
   const beams = {
     hider: makeBeamSprite(FLASHLIGHT.cone),
+    hiderOnline: makeBeamSprite(35),
     seekerLong: makeBeamSprite(SEEKER_LIGHT_MODES[0].cone),
     seekerWide: makeBeamSprite(SEEKER_LIGHT_MODES[1].cone),
   };
@@ -1148,6 +1502,12 @@
       TEAL,
       "#1f7a76",
       "rgba(94, 224, 216, 0.18)"
+    ),
+    p4: makeBallSprite(
+      "#ffe9a8",
+      "#ffd166",
+      "#8a6a12",
+      "rgba(255, 209, 102, 0.18)"
     ),
     seeker: makeBallSprite(
       "#ffb0b0",
@@ -1294,6 +1654,7 @@
   let twoSeekers = mode === 3 && loadTwoSeekers();
   let hardMode = loadHardMode();
   let aiMode = loadAiMode();
+  let tagMode = loadTagMode();
   let radars = [];
   const roundAssignments = new Map();
   let controls = loadControls();
@@ -1305,9 +1666,36 @@
   seeker.pingCD = 0;
   let mouse = { x: -1, y: -1 };
 
+  const online = {
+    role: null,
+    screen: "menu",
+    peer: null,
+    conns: [],
+    players: [],
+    code: "",
+    joinCode: "",
+    mySlot: -1,
+    myGroup: null,
+    hostConn: null,
+    inMatch: false,
+    ready: false,
+    connecting: false,
+    error: "",
+    notice: "",
+    config: { tag: false, map: 0 },
+    seq: 0,
+    lastStateSeq: 0,
+    lastStateSent: 0,
+    lastInputSent: 0,
+    lastSent: { u: false, d: false, l: false, r: false, sprint: false },
+    hostLost: false,
+  };
+  let onlineInputs = {};
+
   function loadMode() {
     try {
-      return localStorage.getItem("hide-and-seek-mode") === "3" ? 3 : 2;
+      const raw = localStorage.getItem("hide-and-seek-mode");
+      return raw === "3" || raw === "4" ? Number(raw) : 2;
     } catch (e) {
       return 2;
     }
@@ -1369,6 +1757,72 @@
     }
   }
 
+  function loadTagMode() {
+    try {
+      return localStorage.getItem("hide-and-seek-tag") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveTagMode() {
+    try {
+      localStorage.setItem("hide-and-seek-tag", tagMode ? "1" : "0");
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function twoSeekerMode() {
+    return mode === 3 && twoSeekers;
+  }
+
+  function onlineIsHost() {
+    return online.role === "host";
+  }
+
+  function onlineIsClient() {
+    return online.role === "client";
+  }
+
+  function onlineLocalInput() {
+    const bind = controls.h1;
+    return {
+      u: pressed.has(bind.up),
+      d: pressed.has(bind.down),
+      l: pressed.has(bind.left),
+      r: pressed.has(bind.right),
+      sprint: pressed.has(bind.sprint),
+    };
+  }
+
+  function onlineDirFor(group) {
+    const inp = onlineInputs[group] || {
+      u: false,
+      d: false,
+      l: false,
+      r: false,
+      sprint: false,
+    };
+    let x = (inp.r ? 1 : 0) - (inp.l ? 1 : 0);
+    let y = (inp.d ? 1 : 0) - (inp.u ? 1 : 0);
+    const len = Math.hypot(x, y);
+    if (len > 0) {
+      x /= len;
+      y /= len;
+    }
+    return { x, y };
+  }
+
+  function onlineSprintFor(group) {
+    return !!(onlineInputs[group] && onlineInputs[group].sprint);
+  }
+
+  function onlineSeekerWalk() {
+    const base = tagMode ? CFG.tag.hiderWalk : CFG.hider.walk;
+    return base * 1.1;
+  }
+
   function defaultControls() {
     return JSON.parse(JSON.stringify(DEFAULT_CONTROLS));
   }
@@ -1403,7 +1857,8 @@
   }
 
   function rules() {
-    return twoSeekers && mode === 3 ? RULES.twoSeekers : RULES[mode];
+    if (tagMode) return mode === 4 ? TAG_RULES_4 : TAG_RULES;
+    return twoSeekerMode() && mode === 3 ? RULES.twoSeekers : RULES[mode];
   }
 
   function aliveHiders() {
@@ -1411,6 +1866,10 @@
   }
 
   function playerGroups() {
+    if (online.inMatch && online.players.length >= 2) {
+      return ONLINE_GROUPS.slice(0, online.players.length);
+    }
+    if (mode === 4) return ["h1", "h2", "p4", "seeker"];
     return mode === 3 ? ["h1", "h2", "seeker"] : ["h1", "seeker"];
   }
 
@@ -1420,9 +1879,10 @@
     const previous = roundAssignments.get(round - 1);
     let assignment;
     if (twoSeekers && mode === 3) {
-      let candidates = previous
-        ? groups.filter((g) => !previous.hiderGroups.includes(g))
-        : groups;
+      let candidates =
+        previous && !tagMode
+          ? groups.filter((g) => !previous.hiderGroups.includes(g))
+          : groups;
       if (!candidates.length) candidates = groups;
       const hiderGroup =
         candidates[Math.floor(Math.random() * candidates.length)];
@@ -1432,7 +1892,7 @@
       };
     } else {
       let candidates = groups;
-      if (mode === 3 && previous) {
+      if (!tagMode && (mode === 3 || mode === 4) && previous) {
         candidates = groups.filter((g) => !previous.seekerGroups.includes(g));
         if (!candidates.length) candidates = groups;
       }
@@ -1449,6 +1909,10 @@
 
   function seekerGroupForRound(round) {
     return roleAssignmentForRound(round).seekerGroups[0];
+  }
+
+  function seekerGroupsForRound(round) {
+    return roleAssignmentForRound(round).seekerGroups;
   }
 
   function hiderGroupsForRound(round) {
@@ -1486,6 +1950,7 @@
       hideType: null,
       spotted: true,
       leafT: 0,
+      sweatT: 0,
       doorCooldown: 0,
       teleportT: 0,
       teleportDoor: -1,
@@ -1527,6 +1992,8 @@
       aiWanderY: 0,
       pingCD: 0,
       revealT: 0,
+      tagSlowT: 0,
+      tagBoostT: 0,
       alive: true,
       id: id === undefined ? 0 : id,
       color: PLAYER_COLORS[group] || RED,
@@ -1534,7 +2001,18 @@
   }
 
   function resetEntities() {
-    if (twoSeekers && mode === 3) {
+    if (mode === 4) {
+      seeker2 = null;
+      const hiderGroups = hiderGroupsForRound(roundNum);
+      const seekerGroup = seekerGroupForRound(roundNum);
+      hiders = [
+        makeEntity(SPAWN.hiders[0], 0, hiderGroups[0]),
+        makeEntity(SPAWN.hiders[1], 1, hiderGroups[1]),
+        makeEntity(SPAWN.hiders[2], 2, hiderGroups[2]),
+      ];
+      seeker = makeEntity(SPAWN.seeker, -1, seekerGroup);
+      seeker.pingCD = 0;
+    } else if (twoSeekers && mode === 3) {
       const hiderGroup = duoHiderGroupForRound(roundNum);
       const seekerGroups = duoSeekerGroupsForRound(roundNum);
       hiders = [makeEntity(SPAWN.hiders[0], 0, hiderGroup)];
@@ -1555,6 +2033,7 @@
     particles = [];
     ping = null;
     radars = [];
+    online.sweatTimers = {};
     shake = 0;
     toast = null;
     seekerBoost = 0;
@@ -1564,8 +2043,14 @@
   }
 
   function setGameMode(m, duo) {
-    if (m !== 2 && m !== 3) return;
+    if (m !== 2 && m !== 3 && m !== 4) return;
     duo = Boolean(duo) && m === 3;
+    if (tagMode && duo) return;
+    if (m === 2 && tagMode) {
+      tagMode = false;
+      saveTagMode();
+      if (MAPS[mapIndex].tagOnly) applyMap(0);
+    }
     if (mode === m && twoSeekers === duo) return;
     mode = m;
     twoSeekers = duo;
@@ -1581,10 +2066,35 @@
   }
 
   function setHardMode(on) {
+    if (tagMode && on) return;
     hardMode = Boolean(on);
     saveHardMode();
     radars = [];
     ping = null;
+    if (phase === PHASE.READY || menuOpen) resetEntities();
+    sfx.click();
+  }
+
+  function setTagMode(on) {
+    tagMode = Boolean(on);
+    saveTagMode();
+    if (tagMode) {
+      if (mode === 2) {
+        mode = 3;
+        saveMode();
+      }
+      if (twoSeekers) {
+        twoSeekers = false;
+        saveTwoSeekers();
+      }
+      hardMode = false;
+      saveHardMode();
+      roundAssignments.clear();
+      applyMap(FIELD_INDEX);
+    } else if (MAPS[mapIndex].tagOnly) {
+      applyMap(0);
+    }
+    refreshConcealSpots();
     if (phase === PHASE.READY || menuOpen) resetEntities();
     sfx.click();
   }
@@ -1597,19 +2107,31 @@
   }
 
   function applyMap(index) {
+    const map = MAPS[index];
     mapIndex = index;
-    WALLS = MAPS[index].walls;
-    HIDES = MAPS[index].hides;
-    SPAWN = MAPS[index].spawn;
-    LAMPS = MAPS[index].lamps;
-    DOORS = MAPS[index].doors || [];
+    W = map.w || 1900;
+    H = map.h || 1140;
+    VIEW_SCALE = VIEW_W / W;
+    WALLS = map.walls;
+    HIDES = map.hides;
+    SPAWN = map.spawn;
+    LAMPS = map.lamps || [];
+    DOORS = map.doors || [];
+    MUD = map.mud || [];
+    TALL_GRASS = map.tallGrass || [];
+    refreshConcealSpots();
     staticArena = mapArenas[index];
     spikeArena = spikeArenas[index];
   }
 
   function setMap(index) {
+    if (tagMode) return;
     if ((phase !== PHASE.READY && !menuOpen) || menuScreen !== "main") return;
-    applyMap(((index % MAPS.length) + MAPS.length) % MAPS.length);
+    let next = ((index % MAPS.length) + MAPS.length) % MAPS.length;
+    for (let i = 0; i < MAPS.length && MAPS[next].tagOnly; i++) {
+      next = (next + 1) % MAPS.length;
+    }
+    applyMap(next);
     resetEntities();
     sfx.click();
   }
@@ -1696,6 +2218,56 @@
     }
   }
 
+  function tagTransfer(hider, seekerEnt) {
+    const index = hiders.indexOf(hider);
+    if (index < 0) return false;
+    hiders.splice(index, 1);
+    const oldSeeker = seekerEnt;
+    oldSeeker.id = hider.id;
+    oldSeeker.alive = true;
+    oldSeeker.stunT = 0;
+    oldSeeker.tagBoostT = CFG.tag.transferBoostTime;
+    oldSeeker.tagSlowT = 0;
+    oldSeeker.insideHide = false;
+    oldSeeker.hideType = null;
+    hiders.push(oldSeeker);
+
+    hider.stunT = CFG.tag.transferStun;
+    hider.tagBoostT = 0;
+    hider.tagSlowT = 0;
+    hider.flashlightOn = true;
+    hider.pingCD = 0;
+    hider.dashT = 0;
+    hider.boostT = 0;
+    hider.teleportT = 0;
+    hider.doorCooldown = 0;
+    hider.insideHide = false;
+    hider.hideType = null;
+    seeker = hider;
+    seeker2 = null;
+
+    burst(hider.x, hider.y, hider.color, 24);
+    burst(oldSeeker.x, oldSeeker.y, oldSeeker.color, 14);
+    toast = { text: "TAGGED!", color: hider.color, t: 0, dur: 1.2 };
+    shake = 6;
+    sfx.tackle();
+    return true;
+  }
+
+  function tagTransferIfHit() {
+    if (!tagMode) return false;
+    for (const hider of hiders) {
+      if (!hider.alive || hider.teleportT > 0) continue;
+      for (const ent of activeSeekers()) {
+        if (ent.stunT > 0) continue;
+        if (dist(hider, ent) < CFG.tagDist) {
+          return tagTransfer(hider, ent);
+        }
+      }
+    }
+    return false;
+  }
+
   function endRound(who, reason) {
     winner = who;
     endReason = reason;
@@ -1728,6 +2300,877 @@
     if (overSince < 0.55) return;
     roundNum += 1;
     startRound();
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // Online play
+  // ---------------------------------------------------------------------------
+
+  function onlineSupported() {
+    return typeof window !== "undefined" && typeof window.Peer === "function";
+  }
+
+  function onlineGenerateCode() {
+    let code = "";
+    for (let i = 0; i < ONLINE_CODE_LEN; i++) {
+      code += ONLINE_CODE_CHARS[Math.floor(Math.random() * ONLINE_CODE_CHARS.length)];
+    }
+    return code;
+  }
+
+  function onlineNormalizeCode(value) {
+    return String(value || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, ONLINE_CODE_LEN);
+  }
+
+  function onlinePlainPlayers() {
+    return online.players.map((p) => ({
+      slot: p.slot,
+      group: p.group,
+      name: p.name,
+      host: !!p.host,
+    }));
+  }
+
+  function onlineSend(conn, data) {
+    try {
+      if (conn && conn.open) conn.send(data);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function onlineBroadcast(data) {
+    for (const player of online.players) {
+      if (player.conn) onlineSend(player.conn, data);
+    }
+  }
+
+  function onlineBroadcastLobby() {
+    if (!onlineIsHost()) return;
+    onlineBroadcast({
+      t: "lobby",
+      code: online.code,
+      config: online.config,
+      players: onlinePlainPlayers(),
+    });
+  }
+
+  function onlineReassignSlots() {
+    if (!onlineIsHost()) return;
+    online.players.forEach((player, index) => {
+      player.slot = index;
+      player.group = ONLINE_GROUPS[index];
+      player.name = "P" + (index + 1);
+    });
+    for (const player of online.players) {
+      if (player.conn) {
+        onlineSend(player.conn, {
+          t: "you",
+          slot: player.slot,
+          group: player.group,
+        });
+      }
+    }
+  }
+
+  function onlineLocalGroup() {
+    return onlineIsHost() ? "h1" : online.myGroup;
+  }
+
+  function onlineViewerGroup() {
+    return onlineLocalGroup();
+  }
+
+  function onlineViewerSeeker() {
+    const group = onlineViewerGroup();
+    return activeSeekers().find((ent) => ent.ctrl === group) || null;
+  }
+
+  function onlineViewerHider() {
+    const group = onlineViewerGroup();
+    return hiders.find((ent) => ent.ctrl === group) || null;
+  }
+
+  function onlineRememberLocalState() {
+    if (online.prev) return;
+    online.prev = {
+      mode,
+      twoSeekers,
+      hardMode,
+      aiMode,
+      tagMode,
+      mapIndex,
+    };
+  }
+
+  function onlineRestoreLocalState() {
+    const prev = online.prev;
+    if (!prev) return;
+    mode = prev.mode;
+    twoSeekers = prev.twoSeekers;
+    hardMode = prev.hardMode;
+    aiMode = prev.aiMode;
+    tagMode = prev.tagMode;
+    roundAssignments.clear();
+    if (tagMode) {
+      applyMap(FIELD_INDEX);
+    } else {
+      applyMap(MAPS[prev.mapIndex] && !MAPS[prev.mapIndex].tagOnly ? prev.mapIndex : 0);
+    }
+    resetEntities();
+    online.prev = null;
+  }
+
+  function onlineResetSession(keepPrev) {
+    try {
+      if (online.peer) online.peer.destroy();
+    } catch (e) {
+      /* ignore */
+    }
+    for (const conn of online.conns) {
+      try {
+        conn.close();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    if (online.hostConn) {
+      try {
+        online.hostConn.close();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    online.role = null;
+    online.peer = null;
+    online.conns = [];
+    online.players = [];
+    online.code = "";
+    online.joinCode = "";
+    online.mySlot = -1;
+    online.myGroup = null;
+    online.hostConn = null;
+    online.inMatch = false;
+    online.ready = false;
+    online.connecting = false;
+    online.error = "";
+    online.notice = "";
+    online.config = { tag: false, map: 0 };
+    online.seq = 0;
+    online.lastStateSeq = 0;
+    online.lastStateSent = 0;
+    online.lastInputSent = 0;
+    online.hostLost = false;
+    onlineInputs = {};
+    if (!keepPrev) online.prev = null;
+  }
+
+  function onlineLeaveSession() {
+    onlineResetSession(true);
+    phase = PHASE.READY;
+    menuScreen = "main";
+    online.screen = "menu";
+    menuOpen = false;
+    paused = false;
+    pressed.clear();
+    winner = null;
+    endReason = "";
+    overSince = 0;
+    roundNum = 1;
+    roundAssignments.clear();
+    onlineRestoreLocalState();
+    resetEntities();
+    sfx.click();
+  }
+
+  function onlineOpenMenu() {
+    if (online.inMatch) return;
+    phase = PHASE.READY;
+    menuScreen = "online";
+    online.screen = "menu";
+    online.error = "";
+    online.notice = "";
+    pressed.clear();
+    sfx.click();
+  }
+
+  function onlineOpenJoinScreen() {
+    if (online.role) return;
+    menuScreen = "join";
+    online.screen = "join";
+    online.joinCode = "";
+    online.error = "";
+    online.notice = "";
+    pressed.clear();
+    sfx.click();
+  }
+
+  function onlineBackToStart() {
+    if (online.inMatch) return;
+    if (online.role) onlineLeaveSession();
+    else {
+      menuScreen = "main";
+      online.screen = "menu";
+      online.error = "";
+      online.notice = "";
+      sfx.click();
+    }
+  }
+
+  function onlineCreateLobby() {
+    if (!onlineSupported()) {
+      online.error = "Online libraries failed to load. Check your connection.";
+      return;
+    }
+    onlineRememberLocalState();
+    onlineResetSession(true);
+    online.role = "host";
+    online.connecting = true;
+    online.screen = "lobby";
+    online.mySlot = 0;
+    online.myGroup = "h1";
+    online.players = [
+      { slot: 0, group: "h1", name: "P1", host: true, conn: null },
+    ];
+    online.config = { tag: false, map: MAPS[mapIndex].tagOnly ? 0 : mapIndex };
+    onlineInputs = { h1: { u: false, d: false, l: false, r: false, sprint: false } };
+    menuScreen = "lobby";
+    phase = PHASE.READY;
+    pressed.clear();
+
+    const attempt = (tries) => {
+      const code = onlineGenerateCode();
+      let peer;
+      try {
+        peer = new window.Peer("hsk-" + code, { debug: 0 });
+      } catch (e) {
+        online.connecting = false;
+        online.error = "Could not start networking.";
+        return;
+      }
+      online.peer = peer;
+      peer.on("open", () => {
+        online.connecting = false;
+        online.ready = true;
+        online.code = code;
+        online.screen = "lobby";
+        menuScreen = "lobby";
+        online.error = "";
+        onlineBroadcastLobby();
+      });
+      peer.on("error", (err) => {
+        const type = err && err.type ? err.type : "";
+        if ((type === "unavailable-id" || type === "network") && tries < 4) {
+          try {
+            peer.destroy();
+          } catch (e) {
+            /* ignore */
+          }
+          window.setTimeout(() => attempt(tries + 1), 350);
+          return;
+        }
+        online.connecting = false;
+        online.error = "Lobby error: " + (type || "connection failed");
+      });
+      peer.on("disconnected", () => {
+        try {
+          peer.reconnect();
+        } catch (e) {
+          /* ignore */
+        }
+      });
+      peer.on("connection", (conn) => {
+        conn.on("open", () => {
+          if (online.players.length >= ONLINE_MAX) {
+            onlineSend(conn, { t: "full" });
+            window.setTimeout(() => {
+              try {
+                conn.close();
+              } catch (e) {
+                /* ignore */
+              }
+            }, 150);
+            return;
+          }
+          const slot = online.players.length;
+          const player = {
+            slot,
+            group: ONLINE_GROUPS[slot],
+            name: "P" + (slot + 1),
+            host: false,
+            conn,
+          };
+          online.players.push(player);
+          online.conns.push(conn);
+          conn.on("data", (data) => onlineHandleHostData(conn, data));
+          conn.on("close", () => onlineHandleHostDisconnect(conn));
+          conn.on("error", () => onlineHandleHostDisconnect(conn));
+          onlineSend(conn, {
+            t: "welcome",
+            code: online.code,
+            slot,
+            group: player.group,
+            config: online.config,
+            players: onlinePlainPlayers(),
+          });
+          onlineReassignSlots();
+          onlineBroadcastLobby();
+        });
+      });
+    };
+    attempt(0);
+  }
+
+  function onlineJoinLobby() {
+    if (!onlineSupported()) {
+      online.error = "Online libraries failed to load. Check your connection.";
+      return;
+    }
+    const code = onlineNormalizeCode(online.joinCode);
+    if (code.length !== ONLINE_CODE_LEN) {
+      online.error = "Enter the 6-character lobby code.";
+      return;
+    }
+    onlineRememberLocalState();
+    onlineResetSession(true);
+    online.role = "client";
+    online.connecting = true;
+    online.code = code;
+    online.screen = "join";
+    menuScreen = "join";
+    online.error = "";
+    pressed.clear();
+
+    let peer;
+    try {
+      peer = new window.Peer({ debug: 0 });
+    } catch (e) {
+      online.connecting = false;
+      online.error = "Could not start networking.";
+      return;
+    }
+    online.peer = peer;
+    peer.on("open", () => {
+      const conn = peer.connect("hsk-" + code, { reliable: true });
+      online.hostConn = conn;
+      conn.on("open", () => {
+        online.connecting = false;
+      });
+      conn.on("data", (data) => onlineHandleClientData(data));
+      conn.on("close", () => {
+        if (online.role === "client") onlineHostLost("Host closed the lobby.");
+      });
+      conn.on("error", () => {
+        if (online.role === "client") onlineHostLost("Could not reach the lobby.");
+      });
+    });
+    peer.on("error", (err) => {
+      online.connecting = false;
+      online.error = "Join error: " + (err && err.type ? err.type : "connection failed");
+    });
+  }
+
+  function onlineHostLost(message) {
+    online.hostLost = true;
+    onlineResetSession(true);
+    phase = PHASE.READY;
+    menuScreen = "online";
+    online.screen = "menu";
+    online.error = message;
+    online.notice = "";
+    pressed.clear();
+    onlineRestoreLocalState();
+    resetEntities();
+  }
+
+  function onlineHandleHostData(conn, data) {
+    if (!data || typeof data !== "object") return;
+    const player = online.players.find((p) => p.conn === conn);
+    if (!player) return;
+    if (data.t === "input") {
+      onlineInputs[player.group] = {
+        u: !!data.u,
+        d: !!data.d,
+        l: !!data.l,
+        r: !!data.r,
+        sprint: !!data.sprint,
+      };
+    } else if (data.t === "action") {
+      onlineActionForGroup(player.group, data.a);
+    } else if (data.t === "leave") {
+      try {
+        conn.close();
+      } catch (e) {
+        /* ignore */
+      }
+      onlineHandleHostDisconnect(conn);
+    }
+  }
+
+  function onlineHandleHostDisconnect(conn) {
+    const index = online.players.findIndex((p) => p.conn === conn);
+    if (index < 0) return;
+    const group = online.players[index].group;
+    online.players.splice(index, 1);
+    online.conns = online.conns.filter((c) => c !== conn);
+    delete onlineInputs[group];
+    if (online.inMatch) {
+      onlineReturnToLobby("A player left the match.");
+    } else {
+      onlineReassignSlots();
+      onlineBroadcastLobby();
+    }
+  }
+
+  function onlineHandleClientData(data) {
+    if (!data || typeof data !== "object") return;
+    if (data.t === "welcome") {
+      online.code = data.code || online.code;
+      online.mySlot = data.slot;
+      online.myGroup = data.group;
+      if (data.config) online.config = data.config;
+      if (data.players) online.players = data.players;
+      online.connecting = false;
+      online.screen = "lobby";
+      menuScreen = "lobby";
+      phase = PHASE.READY;
+    } else if (data.t === "you") {
+      online.mySlot = data.slot;
+      online.myGroup = data.group;
+    } else if (data.t === "lobby") {
+      online.inMatch = false;
+      online.code = data.code || online.code;
+      online.config = data.config || online.config;
+      online.players = data.players || online.players;
+      online.screen = "lobby";
+      menuScreen = "lobby";
+      phase = PHASE.READY;
+      online.notice = "";
+      online.lastStateSeq = 0;
+      if (online.prev) onlineRestoreLocalState();
+      resetEntities();
+    } else if (data.t === "start") {
+      const config = data.config || { mode: 2, tag: false, map: 0 };
+      onlineRememberLocalState();
+      if (data.players) online.players = data.players;
+      online.inMatch = true;
+      online.seq = data.seq || 0;
+      online.lastStateSeq = 0;
+      mode = config.mode;
+      twoSeekers = false;
+      hardMode = false;
+      aiMode = false;
+      tagMode = !!config.tag;
+      roundAssignments.clear();
+      applyMap(config.map);
+      resetEntities();
+      menuScreen = "main";
+      menuOpen = false;
+      paused = false;
+      phase = PHASE.START;
+      phaseLeft = START_TIME;
+      lastTick = Math.ceil(phaseLeft);
+      pressed.clear();
+      onlineInputs = {};
+      online.lastInputSent = 0;
+      sfx.start();
+    } else if (data.t === "state") {
+      onlineApplyState(data.state);
+    } else if (data.t === "full") {
+      onlineHostLost("That lobby is full.");
+    }
+  }
+
+  function onlineRequestAction(action) {
+    if (onlineIsHost()) {
+      onlineActionForGroup("h1", action);
+    } else if (onlineIsClient() && online.hostConn) {
+      onlineSend(online.hostConn, { t: "action", a: action });
+    }
+  }
+
+  function onlineActionForGroup(group, action) {
+    if (!onlineIsHost() || !online.inMatch) return;
+    if (tagMode) return;
+    const seekerEnt = activeSeekers().find((ent) => ent.ctrl === group);
+    if (seekerEnt) {
+      if (action === "light") {
+        seekerEnt.flashlightOn = true;
+        seekerEnt.lightMode =
+          (seekerEnt.lightMode + 1) % SEEKER_LIGHT_MODES.length;
+        sfx.lightSwitch();
+      } else if (action === "ping") {
+        tryPing(seekerEnt);
+      }
+      return;
+    }
+    const hider = hiders.find((h) => h.ctrl === group && h.alive);
+    if (hider && action === "light") {
+      setFlashlight(hider, !hider.flashlightOn);
+    }
+  }
+
+  function onlineToggleTag() {
+    if (!onlineIsHost() || online.inMatch) return;
+    if (!online.config.tag && online.players.length < 3) {
+      online.notice = "TAG needs at least 3 players.";
+      return;
+    }
+    online.config.tag = !online.config.tag;
+    online.notice = "";
+    onlineBroadcastLobby();
+    sfx.click();
+  }
+
+  function onlineCycleMap() {
+    if (!onlineIsHost() || online.inMatch) return;
+    if (online.config.tag) {
+      online.notice = "TAG always uses FIELD.";
+      return;
+    }
+    let next = (online.config.map + 1) % MAPS.length;
+    for (let i = 0; i < MAPS.length && MAPS[next].tagOnly; i++) {
+      next = (next + 1) % MAPS.length;
+    }
+    online.config.map = next;
+    online.notice = "";
+    onlineBroadcastLobby();
+    sfx.click();
+  }
+
+  function onlineReturnToLobby(notice) {
+    if (!onlineIsHost()) return;
+    online.inMatch = false;
+    online.seq += 1;
+    onlineInputs = {};
+    onlineReassignSlots();
+    for (const player of online.players) {
+      if (player.conn) {
+        onlineSend(player.conn, {
+          t: "lobby",
+          code: online.code,
+          config: online.config,
+          players: onlinePlainPlayers(),
+        });
+      }
+    }
+    online.notice = notice || "";
+    phase = PHASE.READY;
+    menuScreen = "lobby";
+    online.screen = "lobby";
+    menuOpen = false;
+    paused = false;
+    winner = null;
+    endReason = "";
+    overSince = 0;
+    roundNum = 1;
+    roundAssignments.clear();
+    pressed.clear();
+    if (online.prev) onlineRestoreLocalState();
+    resetEntities();
+    sfx.click();
+  }
+
+  function onlineHostStart() {
+    if (!onlineIsHost() || online.inMatch) return;
+    const count = online.players.length;
+    if (count < 2) {
+      online.notice = "Need at least 2 players to start.";
+      return;
+    }
+    if (online.config.tag && count < 3) {
+      online.notice = "TAG needs at least 3 players.";
+      return;
+    }
+    onlineRememberLocalState();
+    for (const player of online.players) {
+      if (player.conn) {
+        onlineSend(player.conn, {
+          t: "start",
+          seq: online.seq + 1,
+          config: {
+            mode: count,
+            tag: !!online.config.tag,
+            map: online.config.tag ? FIELD_INDEX : online.config.map,
+          },
+          players: onlinePlainPlayers(),
+        });
+      }
+    }
+    online.inMatch = true;
+    online.seq += 1;
+    online.lastStateSeq = 0;
+    online.lastStateSent = 0;
+    mode = count;
+    twoSeekers = false;
+    hardMode = false;
+    aiMode = false;
+    tagMode = !!online.config.tag;
+    roundAssignments.clear();
+    applyMap(tagMode ? FIELD_INDEX : online.config.map);
+    onlineInputs = {};
+    online.players.forEach((player) => {
+      onlineInputs[player.group] = {
+        u: false,
+        d: false,
+        l: false,
+        r: false,
+        sprint: false,
+      };
+    });
+    online.notice = "";
+    startMatch();
+    onlineSendState();
+  }
+
+  function onlinePackEnt(ent) {
+    const round1 = (v) => Math.round(v * 10) / 10;
+    const round2 = (v) => Math.round(v * 100) / 100;
+    return {
+      x: round1(ent.x),
+      y: round1(ent.y),
+      vx: Math.round(ent.vx),
+      vy: Math.round(ent.vy),
+      fx: round2(ent.facing.x),
+      fy: round2(ent.facing.y),
+      ctrl: ent.ctrl,
+      id: ent.id,
+      color: ent.color,
+      alive: ent.alive ? 1 : 0,
+      inside: ent.insideHide ? 1 : 0,
+      ht: ent.hideType || "",
+      rv: round2(ent.revealT),
+      stam: Math.round(ent.stamina),
+      sp: ent.sprinting ? 1 : 0,
+      pc: round2(ent.pingCD),
+      lm: ent.lightMode,
+      fl: ent.flashlightOn ? 1 : 0,
+      stun: round2(ent.stunT),
+      tb: round2(ent.tagBoostT || 0),
+      tslow: round2(ent.tagSlowT || 0),
+      elim: ent.eliminated ? 1 : 0,
+      tt: round2(ent.teleportT),
+      td: ent.teleportDoor,
+      wound: ent.wounded ? 1 : 0,
+      heal: round2(ent.healT),
+      healer: ent.healer
+        ? [ent.healer.ctrl, round1(ent.healer.x), round1(ent.healer.y), ent.healer.color]
+        : null,
+      trail:
+        ent.trail && ent.trail.length
+          ? ent.trail.slice(-40).map((p) => [
+              round1(p.x),
+              round1(p.y),
+              round2(p.life),
+            ])
+          : [],
+    };
+  }
+
+  function onlinePackState() {
+    const round2 = (v) => Math.round(v * 100) / 100;
+    return {
+      seq: online.seq,
+      phase,
+      phaseLeft: round2(phaseLeft),
+      roundNum,
+      winner,
+      endReason,
+      overSince: round2(overSince),
+      mode,
+      twoSeekers,
+      tagMode,
+      hardMode,
+      mapIndex,
+      seekerBoost: round2(seekerBoost),
+      seekerDoorBoost: round2(seekerDoorBoost),
+      shake: Math.round(shake),
+      ping: ping
+        ? {
+            x: Math.round(ping.x * 10) / 10,
+            y: Math.round(ping.y * 10) / 10,
+            t: round2(ping.t),
+            dur: ping.dur,
+            radius: Math.round((ping.radius || 0) * 10) / 10,
+          }
+        : null,
+      radars: radars.map((r) => ({
+        x: Math.round(r.x * 10) / 10,
+        y: Math.round(r.y * 10) / 10,
+        t: round2(r.t),
+        life: r.life,
+        radius: r.radius,
+      })),
+      toast: toast
+        ? { text: toast.text, color: toast.color, t: round2(toast.t), dur: toast.dur }
+        : null,
+      hiders: hiders.map(onlinePackEnt),
+      seeker: onlinePackEnt(seeker),
+      seeker2: seeker2 ? onlinePackEnt(seeker2) : null,
+    };
+  }
+
+  function onlineSendState() {
+    if (!onlineIsHost() || !online.inMatch) return;
+    if (!online.players.some((p) => p.conn && p.conn.open)) return;
+    onlineBroadcast({ t: "state", state: onlinePackState() });
+  }
+
+  function onlineMaybeSendState(now) {
+    if (!onlineIsHost() || !online.inMatch) return;
+    const interval = 1000 / ONLINE_STATE_HZ;
+    if (now - online.lastStateSent < interval) return;
+    if (!online.players.some((p) => p.conn && p.conn.open)) return;
+    online.lastStateSent = now;
+    onlineSendState();
+  }
+
+  function onlineUnpackEnt(data) {
+    return {
+      x: data.x,
+      y: data.y,
+      vx: data.vx,
+      vy: data.vy,
+      facing: { x: data.fx, y: data.fy },
+      ctrl: data.ctrl,
+      id: data.id,
+      color: data.color,
+      alive: !!data.alive,
+      insideHide: !!data.inside,
+      hideType: data.ht || null,
+      revealT: data.rv || 0,
+      stamina: data.stam,
+      sprinting: !!data.sp,
+      pingCD: data.pc || 0,
+      lightMode: data.lm || 0,
+      flashlightOn: !!data.fl,
+      stunT: data.stun || 0,
+      tagBoostT: data.tb || 0,
+      tagSlowT: data.tslow || 0,
+      eliminated: !!data.elim,
+      teleportT: data.tt || 0,
+      teleportDoor: data.td,
+      wounded: !!data.wound,
+      healT: data.heal || 0,
+      healer: data.healer
+        ? {
+            ctrl: data.healer[0],
+            x: data.healer[1],
+            y: data.healer[2],
+            color: data.healer[3],
+          }
+        : null,
+      trail: (data.trail || []).map((p) => ({ x: p[0], y: p[1], life: p[2] })),
+      spotted: !data.inside || (data.rv || 0) > 0,
+      leafT: 0,
+      sweatT: 0,
+    };
+  }
+
+  function onlineApplyState(state) {
+    if (!onlineIsClient() || !state) return;
+    if (state.seq && state.seq < online.lastStateSeq) return;
+    online.lastStateSeq = state.seq || online.lastStateSeq;
+    if (state.mapIndex !== mapIndex || !!state.tagMode !== tagMode) {
+      tagMode = !!state.tagMode;
+      mode = state.mode;
+      twoSeekers = !!state.twoSeekers;
+      hardMode = !!state.hardMode;
+      applyMap(state.mapIndex);
+    } else {
+      mode = state.mode;
+      twoSeekers = !!state.twoSeekers;
+      hardMode = !!state.hardMode;
+      tagMode = !!state.tagMode;
+    }
+    phase = state.phase;
+    phaseLeft = state.phaseLeft;
+    roundNum = state.roundNum;
+    winner = state.winner;
+    endReason = state.endReason || "";
+    overSince = state.overSince || 0;
+    seekerBoost = state.seekerBoost || 0;
+    seekerDoorBoost = state.seekerDoorBoost || 1;
+    shake = state.shake || 0;
+    ping = state.ping ? { ...state.ping, hit: new Set() } : null;
+    radars = (state.radars || []).slice();
+    toast = state.toast ? { ...state.toast } : null;
+    const previousAlive = new Map(hiders.map((h) => [h.ctrl, h.alive]));
+    hiders = (state.hiders || []).map(onlineUnpackEnt);
+    for (const hider of hiders) {
+      if (!hider.alive && previousAlive.get(hider.ctrl) === true) {
+        burst(hider.x, hider.y, hider.color, 18);
+      }
+    }
+    seeker = state.seeker
+      ? onlineUnpackEnt(state.seeker)
+      : makeEntity(SPAWN.seeker, -1);
+    seeker2 = state.seeker2 ? onlineUnpackEnt(state.seeker2) : null;
+  }
+
+  function onlineSendClientInput(now) {
+    if (!online.inMatch || !onlineIsClient() || !online.hostConn) return;
+    if (now - online.lastInputSent < 1000 / ONLINE_INPUT_HZ) return;
+    online.lastInputSent = now;
+    onlineSend(online.hostConn, { t: "input", ...onlineLocalInput() });
+  }
+
+  function onlineClientTick(dt) {
+    updateParticles(dt);
+    if (shake > 0) shake = Math.max(0, shake - dt * 55);
+    if (toast) {
+      toast.t += dt;
+      if (toast.t >= toast.dur) toast = null;
+    }
+    if (phase === PHASE.OVER || phase === PHASE.MATCH) overSince += dt;
+    const entities = hiders.concat(activeSeekers());
+    for (const ent of entities) {
+      const speed = Math.hypot(ent.vx, ent.vy);
+      if (speed > 170 && Math.random() < dt * 14) {
+        spawnDust(ent.x, ent.y + 8);
+      }
+      if (ent.insideHide && speed > 55 && Math.random() < dt * 10) {
+        spawnLeaf(ent);
+      }
+    }
+    if (!online.sweatTimers) online.sweatTimers = {};
+    for (const hider of hiders) {
+      if (!hider.alive) continue;
+      if (hider.tagSlowT > 0) {
+        let timer = (online.sweatTimers[hider.ctrl] || 0) - dt;
+        if (timer <= 0) {
+          spawnSweat(hider);
+          timer = rand(0.08, 0.16);
+        }
+        online.sweatTimers[hider.ctrl] = timer;
+      } else {
+        online.sweatTimers[hider.ctrl] = 0;
+      }
+    }
+  }
+
+  function onlineHitAt(x, y) {
+    if (menuScreen === "online") {
+      if (pointInRect(x, y, ONLINE_UI.create)) return "create";
+      if (pointInRect(x, y, ONLINE_UI.join)) return "join";
+      if (pointInRect(x, y, ONLINE_UI.back)) return "back";
+    } else if (menuScreen === "join") {
+      if (pointInRect(x, y, ONLINE_UI.codeJoin)) return "codeJoin";
+      if (pointInRect(x, y, ONLINE_UI.codeBack)) return "codeBack";
+    } else if (menuScreen === "lobby") {
+      if (pointInRect(x, y, ONLINE_UI.copy)) return "copy";
+      if (onlineIsHost()) {
+        if (pointInRect(x, y, ONLINE_UI.tag)) return "tag";
+        if (pointInRect(x, y, ONLINE_UI.map)) return "map";
+        if (pointInRect(x, y, ONLINE_UI.start)) return "start";
+      }
+      if (pointInRect(x, y, ONLINE_UI.leave)) return "leave";
+    }
+    return null;
   }
 
   // ---------------------------------------------------------------------------
@@ -1776,6 +3219,7 @@
   document.addEventListener("visibilitychange", () => {
     if (
       document.hidden &&
+      !online.inMatch &&
       (phase === PHASE.HIDE || phase === PHASE.SEEK) &&
       !paused
     ) {
@@ -1903,6 +3347,7 @@
   }
 
   function toggleFlashlightForKey(code) {
+    if (tagMode) return false;
     for (const ent of activeSeekers()) {
       if (code === controls[ent.ctrl].light) {
         ent.flashlightOn = true;
@@ -1922,6 +3367,28 @@
   }
 
   function handlePress(k, code) {
+    if (menuScreen === "join") {
+      if (k === "escape") {
+        menuScreen = "online";
+        online.screen = "menu";
+        online.error = "";
+        online.connecting = false;
+        sfx.click();
+      } else if (k === "enter") {
+        onlineJoinLobby();
+      } else if (k === "backspace") {
+        online.joinCode = online.joinCode.slice(0, -1);
+        sfx.click();
+      } else if (/^[a-z0-9]$/.test(k)) {
+        if (online.joinCode.length < ONLINE_CODE_LEN) {
+          online.joinCode += k.toUpperCase();
+          online.error = "";
+          sfx.click();
+        }
+      }
+      return;
+    }
+
     if (k === "n") {
       muted = !muted;
       try {
@@ -1930,6 +3397,50 @@
         /* ignore */
       }
       if (!muted) sfx.click();
+      return;
+    }
+
+    if (menuScreen === "online" && !online.role) {
+      if (k === "escape") onlineBackToStart();
+      return;
+    }
+
+    if (online.role && !online.inMatch) {
+      if (k === "escape") {
+        onlineLeaveSession();
+      } else if (
+        onlineIsHost() &&
+        (k === " " || k === "enter") &&
+        menuScreen === "lobby"
+      ) {
+        onlineHostStart();
+      }
+      return;
+    }
+
+    if (online.inMatch) {
+      if (k === "escape") {
+        if (onlineIsHost()) onlineReturnToLobby();
+        else onlineLeaveSession();
+        return;
+      }
+      if (
+        onlineIsHost() &&
+        (k === " " || k === "enter") &&
+        (phase === PHASE.OVER || phase === PHASE.MATCH)
+      ) {
+        nextRound();
+        return;
+      }
+      const bind = controls.h1;
+      if (code === bind.light) {
+        onlineRequestAction("light");
+        return;
+      }
+      if (code === bind.ping) {
+        onlineRequestAction("ping");
+        return;
+      }
       return;
     }
 
@@ -2001,6 +3512,10 @@
         return;
       }
       if (k === "4") {
+        setMode(4);
+        return;
+      }
+      if (k === "5") {
         setGameMode(3, true);
         return;
       }
@@ -2060,12 +3575,15 @@
   function menuHit(x, y) {
     if (pointInRect(x, y, MENU.b2)) return "mode2";
     if (pointInRect(x, y, MENU.b3)) return "mode3";
+    if (pointInRect(x, y, MENU.four)) return "four";
     if (pointInRect(x, y, MENU.duo)) return "duo";
-    if (pointInRect(x, y, MENU.map)) return "map";
+    if (pointInRect(x, y, MENU.tag)) return "tag";
+    if (!tagMode && pointInRect(x, y, MENU.map)) return "map";
     if (pointInRect(x, y, MENU.hard)) return "hard";
     if (pointInRect(x, y, MENU.ai)) return "ai";
     if (pointInRect(x, y, MENU.fullscreen)) return "fullscreen";
     if (pointInRect(x, y, MENU.controls)) return "controls";
+    if (pointInRect(x, y, MENU.online)) return "online";
     if (pointInRect(x, y, MENU.start)) return "start";
     return null;
   }
@@ -2073,25 +3591,30 @@
   function controlsLayout() {
     const cards = [];
     const bindings = [];
-    const cardW = 300;
+    const groups = mode === 4 ? CONTROL_GROUPS : CONTROL_GROUPS.slice(0, 3);
+    const compact = groups.length > 3;
+    const cardW = compact ? 224 : 300;
     const cardH = 350;
-    const gap = 20;
-    const startX = 30;
+    const gap = compact ? 12 : 20;
+    const startX = compact ? 34 : 30;
     const top = 152;
+    const buttonW = compact ? 94 : 126;
+    const pad = compact ? 14 : 20;
+    const rowTop = top + (compact ? 84 : 78);
 
-    CONTROL_GROUPS.forEach((group, index) => {
+    groups.forEach((group, index) => {
       const x = startX + index * (cardW + gap);
       cards.push({ ...group, x, y: top, w: cardW, h: cardH });
       group.actions.forEach((action, row) => {
-        const cy = top + 78 + row * 34;
+        const cy = rowTop + row * 34;
         bindings.push({
           group: group.key,
           action,
           centerY: cy,
           button: {
-            x: x + cardW - 20 - 126,
+            x: x + cardW - pad - buttonW,
             y: cy - 15,
-            w: 126,
+            w: buttonW,
             h: 30,
           },
         });
@@ -2144,15 +3667,50 @@
       return;
     }
 
+    const onlineHit = onlineHitAt(p.x, p.y);
+    if (onlineHit) {
+      if (onlineHit === "create") onlineCreateLobby();
+      else if (onlineHit === "join") onlineOpenJoinScreen();
+      else if (onlineHit === "back") onlineBackToStart();
+      else if (onlineHit === "codeJoin") onlineJoinLobby();
+      else if (onlineHit === "codeBack") {
+        menuScreen = "online";
+        online.screen = "menu";
+        online.error = "";
+        sfx.click();
+      } else if (onlineHit === "copy") {
+        try {
+          navigator.clipboard.writeText(online.code);
+          online.notice = "Lobby code copied.";
+        } catch (e) {
+          online.notice = "Copy failed — read the code above.";
+        }
+      } else if (onlineHit === "tag") onlineToggleTag();
+      else if (onlineHit === "map") onlineCycleMap();
+      else if (onlineHit === "start") onlineHostStart();
+      else if (onlineHit === "leave") onlineLeaveSession();
+      return;
+    }
+    if (
+      menuScreen === "online" ||
+      menuScreen === "join" ||
+      menuScreen === "lobby"
+    ) {
+      return;
+    }
+
     const hit = menuHit(p.x, p.y);
     if (hit === "mode2") setMode(2);
     else if (hit === "mode3") setMode(3);
+    else if (hit === "four") setMode(4);
     else if (hit === "duo") setGameMode(3, true);
+    else if (hit === "tag") setTagMode(!tagMode);
     else if (hit === "map") setMap(mapIndex + 1);
     else if (hit === "hard") setHardMode(!hardMode);
     else if (hit === "ai") setAiMode(!aiMode);
     else if (hit === "fullscreen") toggleFullscreen();
     else if (hit === "controls") openControls();
+    else if (hit === "online") onlineOpenMenu();
     else if (hit === "start") startMatch();
   });
 
@@ -2166,11 +3724,16 @@
     const hit =
       menuScreen === "controls"
         ? controlsHitAt(p.x, p.y)
+        : menuScreen === "online" ||
+          menuScreen === "join" ||
+          menuScreen === "lobby"
+        ? onlineHitAt(p.x, p.y)
         : menuHit(p.x, p.y);
     canvas.style.cursor = hit ? "pointer" : "default";
   });
 
   function tryPing(ent = seeker) {
+    if (tagMode) return;
     if (phase !== PHASE.SEEK || paused || ent.pingCD > 0) return;
     ent.pingCD = hardMode ? CFG.hard.radarCooldown : CFG.pingCooldown;
     if (hardMode) {
@@ -2208,6 +3771,90 @@
     return { x, y };
   }
 
+  function inTallGrass(ent) {
+    for (const patch of TALL_GRASS) {
+      if (pointInRect(ent.x, ent.y, patch)) return true;
+    }
+    return false;
+  }
+
+  function concealSpotAt(ent) {
+    for (const spot of CONCEAL_SPOTS) {
+      if (pointInRect(ent.x, ent.y, spot)) return spot;
+    }
+    return null;
+  }
+
+  function inConcealSpot(ent) {
+    return !!concealSpotAt(ent);
+  }
+
+  function inMud(ent) {
+    for (const puddle of MUD) {
+      if (pointInEllipse(ent.x, ent.y, puddle)) return true;
+    }
+    return false;
+  }
+
+  function terrainSpeedMult(ent) {
+    let mult = 1;
+    if (TALL_GRASS.length && inTallGrass(ent)) mult *= CFG.tag.grassSlow;
+    if (MUD.length && inMud(ent)) mult *= CFG.tag.mudSlow;
+    return mult;
+  }
+
+  function refreshConcealSpots() {
+    if (!tagMode) {
+      CONCEAL_SPOTS = HIDES;
+      return;
+    }
+    const grass = TALL_GRASS.map((patch) => ({
+      x: patch.x,
+      y: patch.y,
+      w: patch.w,
+      h: patch.h,
+      type: "grass",
+    }));
+    CONCEAL_SPOTS = grass.concat(HIDES);
+  }
+
+  function segmentBlocked(x1, y1, x2, y2) {
+    const steps = Math.max(2, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 16));
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const x = x1 + (x2 - x1) * t;
+      const y = y1 + (y2 - y1) * t;
+      for (const wall of WALLS) {
+        if (pointInRect(x, y, wall)) return true;
+      }
+    }
+    return false;
+  }
+
+  function inSeekerCone(ent, hider) {
+    const dx = hider.x - ent.x;
+    const dy = hider.y - ent.y;
+    const d = Math.hypot(dx, dy);
+    if (d > CFG.tag.coneRange || d < 0.001) return false;
+    if (inConcealSpot(hider) && d > CFG.tag.revealDist) return false;
+    const fl = Math.hypot(ent.facing.x, ent.facing.y) || 1;
+    const dot = (dx * ent.facing.x + dy * ent.facing.y) / (d * fl);
+    if (dot < Math.cos((CFG.tag.cone / 2) * (Math.PI / 180))) return false;
+    return !segmentBlocked(ent.x, ent.y, hider.x, hider.y);
+  }
+
+  function tagConcealAlpha(ent) {
+    if (!tagMode || (phase !== PHASE.SEEK && phase !== PHASE.HIDE)) return 1;
+    if (!inConcealSpot(ent)) return 1;
+    const isSeeker = activeSeekers().includes(ent);
+    const opponents = isSeeker ? hiders : activeSeekers();
+    for (const other of opponents) {
+      if (other === ent || other.alive === false) continue;
+      if (dist(other, ent) < CFG.tag.revealDist) return 1;
+    }
+    return 0;
+  }
+
   // ---------------------------------------------------------------------------
   // Movement & collision
   // ---------------------------------------------------------------------------
@@ -2217,7 +3864,7 @@
     if (ent.spikeHitCD > 0) return;
     ent.spikeHitCD = CFG.hard.spikeHitCooldown;
     if (activeSeekers().includes(ent)) {
-      if (twoSeekers && mode === 3) {
+      if (twoSeekerMode()) {
         ent.eliminated = true;
         ent.alive = false;
         ent.vx = ent.vy = 0;
@@ -2245,7 +3892,7 @@
       }
       return;
     }
-    const solo = mode === 2 || twoSeekers;
+    const solo = hiders.length <= 1;
     ent.wounded = true;
     ent.woundT = solo ? CFG.hard.woundedTime : 0;
     ent.bleedT = solo ? 0 : CFG.hard.bleedTime;
@@ -2333,25 +3980,15 @@
         continue;
       }
 
-      let inside = null;
-      for (let i = 0; i < HIDES.length; i++) {
-        if (pointInRect(hider.x, hider.y, HIDES[i])) {
-          inside = HIDES[i];
-          break;
-        }
-      }
+      const inside = concealSpotAt(hider);
       hider.insideHide = !!inside;
       hider.hideType = inside ? inside.type : null;
 
       const pinged = hider.revealT > 0;
-      hider.spotted = !inside || pinged;
+      hider.spotted = tagMode ? true : !inside || pinged;
 
       const speed = Math.hypot(hider.vx, hider.vy);
-      if (
-        inside &&
-        inside.type === "bush" &&
-        speed > 55
-      ) {
+      if (!tagMode && inside && speed > 55) {
         hider.leafT -= dt;
         if (hider.leafT <= 0) {
           hider.leafT = 0.07;
@@ -2359,6 +3996,13 @@
         }
       } else {
         hider.leafT = 0;
+      }
+    }
+    if (tagMode) {
+      for (const ent of activeSeekers()) {
+        const spot = concealSpotAt(ent);
+        ent.insideHide = !!spot;
+        ent.hideType = spot ? spot.type : null;
       }
     }
   }
@@ -2397,6 +4041,27 @@
       rot: rand(0, TAU),
       vr: rand(-7, 7),
     });
+  }
+
+  function spawnSweat(ent) {
+    const drops = Math.random() < 0.35 ? 2 : 1;
+    for (let i = 0; i < drops; i++) {
+      const ang = rand(-Math.PI * 0.92, -Math.PI * 0.08);
+      const sp = rand(35, 95);
+      particles.push({
+        type: "sweat",
+        x: ent.x + rand(-6, 6),
+        y: ent.y + rand(-10, -2),
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - 18,
+        life: rand(0.45, 0.8),
+        max: 0.8,
+        size: rand(1.6, 3),
+        color: Math.random() < 0.3 ? "#e8fbff" : "#9fe3ff",
+        rot: rand(-0.5, 0.5),
+        vr: rand(-5, 5),
+      });
+    }
   }
 
   function burst(x, y, color, count) {
@@ -2527,6 +4192,7 @@
       if (p.type === "leaf") p.vy += 42 * dt;
       if (p.type === "confetti") p.vy += 30 * dt;
       if (p.type === "dust") p.vy -= 6 * dt;
+      if (p.type === "sweat") p.vy += 150 * dt;
     }
   }
 
@@ -2595,8 +4261,8 @@
 
   function aiChooseHideout(ent, seekers) {
     const options = [];
-    for (let i = 0; i < HIDES.length; i++) {
-      const spot = HIDES[i];
+    for (let i = 0; i < CONCEAL_SPOTS.length; i++) {
+      const spot = CONCEAL_SPOTS[i];
       const cx = spot.x + spot.w / 2;
       const cy = spot.y + spot.h / 2;
       let safe = Infinity;
@@ -2619,7 +4285,7 @@
 
   function aiSetHideTarget(hider, index) {
     hider.aiHide = index;
-    const spot = HIDES[index];
+    const spot = CONCEAL_SPOTS[index];
     const pad = 14;
     hider.aiHideX =
       spot.x + pad + Math.random() * Math.max(1, spot.w - pad * 2);
@@ -2730,7 +4396,7 @@
             tryDash(hider, hider.aiDir);
           }
         } else {
-          hider.aiSprint = hider.stamina > 20;
+          hider.aiSprint = !tagMode && hider.stamina > 20;
         }
         continue;
       }
@@ -2742,18 +4408,18 @@
         continue;
       }
       let hideIndex = hider.aiHide;
-      if (hideIndex >= 0 && hideIndex < HIDES.length && seekers.length) {
+      if (hideIndex >= 0 && hideIndex < CONCEAL_SPOTS.length && seekers.length) {
         const cx = hider.aiHideX;
         const cy = hider.aiHideY;
         if (seekers.some((s) => Math.hypot(s.x - cx, s.y - cy) < 200)) {
           hideIndex = -1;
         }
       }
-      if (hideIndex < 0 || hideIndex >= HIDES.length) {
+      if (hideIndex < 0 || hideIndex >= CONCEAL_SPOTS.length) {
         hideIndex = aiChooseHideout(hider, seekers);
         if (hideIndex >= 0) aiSetHideTarget(hider, hideIndex);
       }
-      if (hideIndex >= 0 && HIDES[hideIndex]) {
+      if (hideIndex >= 0 && CONCEAL_SPOTS[hideIndex]) {
         const cx = hider.aiHideX;
         const cy = hider.aiHideY;
         const d = Math.hypot(cx - hider.x, cy - hider.y);
@@ -2763,7 +4429,7 @@
           setFlashlight(hider, false);
         } else {
           hider.aiDir = aiProbeDir(hider, cx, cy);
-          hider.aiSprint = hider.stamina > 35 && d > 40;
+          hider.aiSprint = !tagMode && hider.stamina > 35 && d > 40;
         }
       } else {
         hider.aiDir = aiProbeDir(hider, W / 2, H / 2);
@@ -2780,36 +4446,42 @@
       let targetDist = Infinity;
       for (const hider of hiders) {
         if (!hider.alive) continue;
-        if (hider.insideHide && hider.revealT <= 0) continue;
-        const d = dist(ent, hider);
-        if (d < targetDist) {
-          targetDist = d;
+        const hiderDist = dist(ent, hider);
+        if (
+          hider.insideHide &&
+          hider.revealT <= 0 &&
+          (!tagMode || hiderDist > CFG.tag.revealDist)
+        ) {
+          continue;
+        }
+        if (hiderDist < targetDist) {
+          targetDist = hiderDist;
           target = hider;
         }
       }
       if (!target) {
-        if (ent.aiSearch < 0 || ent.aiSearch >= HIDES.length) {
-          ent.aiSearch = HIDES.length
-            ? Math.floor(Math.random() * HIDES.length)
+        if (ent.aiSearch < 0 || ent.aiSearch >= CONCEAL_SPOTS.length) {
+          ent.aiSearch = CONCEAL_SPOTS.length
+            ? Math.floor(Math.random() * CONCEAL_SPOTS.length)
             : -1;
         }
-        if (ent.aiSearch >= 0 && HIDES[ent.aiSearch]) {
-          const spot = HIDES[ent.aiSearch];
+        if (ent.aiSearch >= 0 && CONCEAL_SPOTS[ent.aiSearch]) {
+          const spot = CONCEAL_SPOTS[ent.aiSearch];
           const cx = spot.x + spot.w / 2;
           const cy = spot.y + spot.h / 2;
           if (Math.hypot(ent.x - cx, ent.y - cy) < 28) {
-            ent.aiSearch = (ent.aiSearch + 1) % HIDES.length;
+            ent.aiSearch = (ent.aiSearch + 1) % CONCEAL_SPOTS.length;
           }
           target = { x: cx, y: cy };
         } else {
           target = { x: W / 2, y: H / 2 };
         }
       }
-      if (ent.pingCD <= 0 && phase === PHASE.SEEK) {
+      if (!tagMode && ent.pingCD <= 0 && phase === PHASE.SEEK) {
         tryPing(ent);
       }
       const d = Math.hypot(target.x - ent.x, target.y - ent.y);
-      setLightMode(ent, d > 280 ? 0 : d < 140 ? 2 : 1);
+      if (!tagMode) setLightMode(ent, d > 280 ? 0 : d < 140 ? 2 : 1);
       ent.aiDir =
         d < 12 ? { x: 0, y: 0 } : aiProbeDir(ent, target.x, target.y);
       ent.aiSprint = false;
@@ -2825,6 +4497,9 @@
   // ---------------------------------------------------------------------------
 
   function update(dt) {
+    if (online.inMatch && onlineIsHost()) {
+      onlineInputs.h1 = onlineLocalInput();
+    }
     updateParticles(dt);
     if (shake > 0) shake = Math.max(0, shake - dt * 55);
     if (toast) {
@@ -2873,7 +4548,9 @@
         }
       } else {
         for (const ent of activeSeekers()) {
-          const dir = readDir(controls[ent.ctrl]);
+          const dir = online.inMatch
+            ? onlineDirFor(ent.ctrl)
+            : readDir(controls[ent.ctrl]);
           if (dir.x !== 0 || dir.y !== 0) {
             ent.facing.x = dir.x;
             ent.facing.y = dir.y;
@@ -2896,6 +4573,9 @@
       if (ent.stunT > 0) {
         ent.stunT = Math.max(0, ent.stunT - dt);
       }
+      if (ent.tagBoostT > 0) {
+        ent.tagBoostT = Math.max(0, ent.tagBoostT - dt);
+      }
     }
     for (const hider of hiders) {
       if (hider.revealT > 0) hider.revealT = Math.max(0, hider.revealT - dt);
@@ -2903,20 +4583,48 @@
 
     if (aiMode) updateAI(dt);
 
-    for (const ent of activeSeekers()) {
-      if (ent.lightMode !== 2 || !ent.flashlightOn) continue;
-      const radius =
-        FLASHLIGHT.range * SEEKER_LIGHT_MODES[2].rangeMult;
+    if (tagMode && phase === PHASE.SEEK) {
+      for (const hider of hiders) {
+        if (hider.tagSlowT > 0) {
+          hider.tagSlowT = Math.max(0, hider.tagSlowT - dt);
+        }
+        if (hider.sweatT > 0) {
+          hider.sweatT = Math.max(0, hider.sweatT - dt);
+        }
+      }
       for (const hider of hiders) {
         if (!hider.alive) continue;
-        if (dist(hider, ent) <= radius) {
-          hider.revealT = CFG.pingReveal;
+        for (const ent of activeSeekers()) {
+          if (ent.stunT > 0) continue;
+          if (tagConcealAlpha(ent) <= 0.01) continue;
+          if (inSeekerCone(ent, hider)) {
+            hider.tagSlowT = CFG.tag.coneSlowTime;
+            if (hider.sweatT <= 0) {
+              spawnSweat(hider);
+              hider.sweatT = rand(0.08, 0.16);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    if (!tagMode) {
+      for (const ent of activeSeekers()) {
+        if (ent.lightMode !== 2 || !ent.flashlightOn) continue;
+        const radius =
+          FLASHLIGHT.range * SEEKER_LIGHT_MODES[2].rangeMult;
+        for (const hider of hiders) {
+          if (!hider.alive) continue;
+          if (dist(hider, ent) <= radius) {
+            hider.revealT = CFG.pingReveal;
+          }
         }
       }
     }
 
     phaseLeft -= dt;
-    if (phase === PHASE.SEEK) {
+    if (phase === PHASE.SEEK && !tagMode) {
       if (!seekerBoostTriggered && phaseLeft <= 10.5) {
         seekerBoostTriggered = true;
         seekerBoost = 10.5;
@@ -2939,10 +4647,19 @@
         : phase === PHASE.SEEK
         ? CFG.hider.seekSprint
         : 1;
-    const hiderStats = {
-      walk: CFG.hider.walk * walkMult,
-      sprint: CFG.hider.sprint * sprintMult,
-    };
+    const hiderStats = online.inMatch
+      ? tagMode
+        ? { walk: CFG.tag.hiderWalk, sprint: CFG.tag.hiderWalk }
+        : {
+            walk: CFG.hider.walk,
+            sprint: onlineSeekerWalk() * 1.15,
+          }
+      : tagMode
+      ? { walk: CFG.tag.hiderWalk, sprint: CFG.tag.hiderWalk }
+      : {
+          walk: CFG.hider.walk * walkMult,
+          sprint: CFG.hider.sprint * sprintMult,
+        };
     for (const hider of hiders) {
       if (!hider.alive) continue;
       if (hider.spikeHitCD > 0) {
@@ -2953,6 +4670,9 @@
       }
       if (hider.boostT > 0) {
         hider.boostT = Math.max(0, hider.boostT - dt);
+      }
+      if (hider.tagBoostT > 0) {
+        hider.tagBoostT = Math.max(0, hider.tagBoostT - dt);
       }
       if (hider.teleportT > 0) {
         hider.teleportT = Math.max(0, hider.teleportT - dt);
@@ -3008,19 +4728,31 @@
         continue;
       }
       const bind = controls[hider.ctrl];
-      const dir = aiMode ? hider.aiDir : readDir(bind);
-      const sprint = aiMode
+      const dir = aiMode
+        ? hider.aiDir
+        : online.inMatch
+        ? onlineDirFor(hider.ctrl)
+        : readDir(bind);
+      const sprint = tagMode
+        ? false
+        : online.inMatch
+        ? onlineSprintFor(hider.ctrl)
+        : aiMode
         ? !hardMode && hider.aiSprint
         : !hardMode && pressed.has(bind.sprint);
       let stats = hiderStats;
-      let mult = 1;
-      if (!hider.flashlightOn) mult *= CFG.hider.darkSpeed;
-      if (hider.wounded) mult *= CFG.hard.woundedSlow;
-      if (hider.dashSlowT > 0) mult *= CFG.hard.dashSlow;
-      if (hider.boostT > 0) mult *= CFG.hard.tackleBoost;
-      if (radars.some((r) => dist(hider, r) <= r.radius)) {
-        mult *= CFG.hard.radarSlow;
+      let mult = terrainSpeedMult(hider);
+      if (!tagMode) {
+        if (!hider.flashlightOn) mult *= CFG.hider.darkSpeed;
+        if (hider.wounded) mult *= CFG.hard.woundedSlow;
+        if (hider.dashSlowT > 0) mult *= CFG.hard.dashSlow;
+        if (hider.boostT > 0) mult *= CFG.hard.tackleBoost;
+        if (radars.some((r) => dist(hider, r) <= r.radius)) {
+          mult *= CFG.hard.radarSlow;
+        }
       }
+      if (hider.tagSlowT > 0) mult *= CFG.tag.coneSlow;
+      if (hider.tagBoostT > 0) mult *= CFG.tag.transferBoost;
       if (mult !== 1) {
         stats = {
           walk: hiderStats.walk * mult,
@@ -3090,15 +4822,28 @@
           continue;
         }
         const slow = ent.spikeSlowT > 0 ? CFG.hard.seekerSlow : 1;
-        const seekerStats = {
-          walk:
-            CFG.seeker.walk *
-            seekerDoorBoost *
-            (seekerBoost > 0 ? CFG.seeker.finalBoost : 1) *
-            slow,
-          sprint: CFG.seeker.sprint,
-        };
-        const dir = aiMode ? ent.aiDir : readDir(controls[ent.ctrl]);
+        const seekerStats = tagMode
+          ? {
+              walk:
+                (online.inMatch ? onlineSeekerWalk() : CFG.tag.seekerWalk) *
+                terrainSpeedMult(ent),
+              sprint:
+                (online.inMatch ? onlineSeekerWalk() : CFG.tag.seekerWalk) *
+                terrainSpeedMult(ent),
+            }
+          : {
+              walk:
+                (online.inMatch ? onlineSeekerWalk() : CFG.seeker.walk) *
+                seekerDoorBoost *
+                (seekerBoost > 0 ? CFG.seeker.finalBoost : 1) *
+                slow,
+              sprint: CFG.seeker.sprint,
+            };
+        const dir = aiMode
+          ? ent.aiDir
+          : online.inMatch
+          ? onlineDirFor(ent.ctrl)
+          : readDir(controls[ent.ctrl]);
         moveEntity(ent, dir, seekerStats, false, dt);
       }
     }
@@ -3118,52 +4863,65 @@
     }
 
     let caught = false;
-    for (const hider of hiders) {
-      if (!hider.alive || hider.teleportT > 0) continue;
-      for (const ent of activeSeekers()) {
-        if (ent.stunT > 0) continue;
-        if (dist(hider, ent) < CFG.tagDist) {
-          if (hardMode && hider.dashT > 0) {
-            if (!hider.tackled) {
-              hider.tackled = true;
-              ent.stunT = CFG.hard.tackleStun;
-              ent.vx = 0;
-              ent.vy = 0;
-              ent.sprinting = false;
-              hider.boostT = CFG.hard.tackleBoostTime;
-              burst(ent.x, ent.y, ent.color, 18);
-              burst(hider.x, hider.y, hider.color, 12);
-              toast = { text: "TACKLED!", color: hider.color, t: 0, dur: 1.0 };
-              shake = 6;
-              sfx.tackle();
+    if (tagMode) {
+      tagTransferIfHit();
+    } else {
+      for (const hider of hiders) {
+        if (!hider.alive || hider.teleportT > 0) continue;
+        for (const ent of activeSeekers()) {
+          if (ent.stunT > 0) continue;
+          if (dist(hider, ent) < CFG.tagDist) {
+            if (hardMode && hider.dashT > 0) {
+              if (!hider.tackled) {
+                hider.tackled = true;
+                ent.stunT = CFG.hard.tackleStun;
+                ent.vx = 0;
+                ent.vy = 0;
+                ent.sprinting = false;
+                hider.boostT = CFG.hard.tackleBoostTime;
+                burst(ent.x, ent.y, ent.color, 18);
+                burst(hider.x, hider.y, hider.color, 12);
+                toast = { text: "TACKLED!", color: hider.color, t: 0, dur: 1.0 };
+                shake = 6;
+                sfx.tackle();
+              }
+            } else if (hider.dashT <= 0) {
+              catchHider(hider);
+              caught = true;
             }
-          } else if (hider.dashT <= 0) {
-            catchHider(hider);
-            caught = true;
+            break;
           }
-          break;
         }
       }
     }
 
-    if (caught && aliveHiders() === 0) {
+    if (tagMode) {
+      if (phaseLeft <= 0) {
+        endRound(
+          "hider",
+          `Time up · ${playerName(seeker.ctrl)} was still seeker`
+        );
+      }
+    } else if (caught && aliveHiders() === 0) {
+      const left = Math.max(0, phaseLeft).toFixed(1);
       endRound(
         "seeker",
-        twoSeekers
-          ? `Hider caught with ${Math.max(0, phaseLeft).toFixed(1)}s left`
-          : mode === 3
-          ? `Both hiders caught with ${Math.max(0, phaseLeft).toFixed(1)}s left`
-          : `Tagged with ${Math.max(0, phaseLeft).toFixed(1)}s left`
+        hiders.length > 1
+          ? `All hiders caught with ${left}s left`
+          : `Tagged with ${left}s left`
       );
     } else if (phaseLeft <= 0) {
       const alive = aliveHiders();
-      const reason = twoSeekers
-        ? `Hider survived the ${rules().seekTime}s hunt`
-        : mode === 3
-        ? alive >= 2
-          ? `Both hiders survived all ${rules().seekTime} seconds`
-          : `One hider survived the ${rules().seekTime}s hunt`
-        : `Survived all ${rules().seekTime} seconds`;
+      const total = hiders.length;
+      let reason;
+      if (total > 1) {
+        reason =
+          alive >= total
+            ? `All hiders survived all ${rules().seekTime} seconds`
+            : `${alive} of ${total} hiders survived the ${rules().seekTime}s hunt`;
+      } else {
+        reason = `Survived all ${rules().seekTime} seconds`;
+      }
       endRound("hider", reason);
     }
   }
@@ -3172,10 +4930,48 @@
   // Drawing: world
   // ---------------------------------------------------------------------------
 
+  function drawTagSeekerCones() {
+    if (!tagMode || phase !== PHASE.SEEK) return;
+    for (const ent of activeSeekers()) {
+      if (ent.stunT > 0) continue;
+      if (tagConcealAlpha(ent) <= 0.01) continue;
+      const range = CFG.tag.coneRange;
+      const half = (CFG.tag.cone / 2) * (Math.PI / 180);
+      const ang = Math.atan2(ent.facing.y, ent.facing.x);
+      const grad = ctx.createRadialGradient(
+        ent.x,
+        ent.y,
+        0,
+        ent.x,
+        ent.y,
+        range
+      );
+      grad.addColorStop(0, "rgba(255, 241, 170, 0.22)");
+      grad.addColorStop(0.7, "rgba(255, 241, 170, 0.1)");
+      grad.addColorStop(1, "rgba(255, 241, 170, 0)");
+      ctx.save();
+      ctx.globalAlpha = tagConcealAlpha(ent) < 1 ? 0.3 : 1;
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(ent.x, ent.y);
+      ctx.arc(ent.x, ent.y, range, ang - half, ang + half);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 244, 190, 0.18)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(ent.x, ent.y, range, ang - half, ang + half);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   function drawWorld() {
+    if (tagMode) drawTagSeekerCones();
+
     // bush rustle
-    for (let i = 0; i < HIDES.length; i++) {
-      const b = HIDES[i];
+    for (let i = 0; i < CONCEAL_SPOTS.length; i++) {
+      const b = CONCEAL_SPOTS[i];
       let rustlingHider = null;
       for (const hider of hiders) {
         if (!hider.alive || !hider.insideHide) continue;
@@ -3183,7 +4979,7 @@
         if (Math.hypot(hider.vx, hider.vy) > 55) rustlingHider = hider;
       }
 
-      if (b.type === "bush" && rustlingHider) {
+      if ((b.type === "bush" || b.type === "grass") && rustlingHider) {
         const h = rustlingHider;
         const wobble = time * 34 + i;
         ctx.save();
@@ -3211,24 +5007,76 @@
       phase === PHASE.READY ||
       phase === PHASE.OVER ||
       phase === PHASE.MATCH;
+    const viewerHider = online.inMatch ? onlineViewerHider() : null;
+    const viewerHiderGroup = viewerHider ? viewerHider.ctrl : null;
     for (const hider of hiders) {
       if (!hider.alive) continue;
+      if (online.inMatch && viewerHiderGroup && hider.ctrl !== viewerHiderGroup) {
+        continue;
+      }
       const role = hider.id === 1 ? "hider2" : "hider";
-      const show = revealAll || hider.spotted;
+      const isSelf =
+        online.inMatch &&
+        viewerHiderGroup &&
+        hider.ctrl === viewerHiderGroup;
+      let show;
+      if (online.inMatch) {
+        if (viewerHiderGroup) {
+          show = true;
+        } else {
+          show = !hider.insideHide;
+        }
+      } else {
+        show = tagMode ? true : revealAll || hider.spotted;
+      }
       const drawnAbove = hider.revealT > 0 && hider.insideHide;
+      const alpha = isSelf
+        ? hider.insideHide
+          ? 0.42
+          : 1
+        : tagConcealAlpha(hider);
       if (show && !drawnAbove) {
-        drawPlayerSprite(hider, role);
+        drawPlayerSprite(hider, role, alpha);
       }
     }
 
     // seekers on top
-    for (const ent of activeSeekers()) drawPlayerSprite(ent, "seeker");
+    for (const ent of activeSeekers()) {
+      drawPlayerSprite(ent, "seeker", tagConcealAlpha(ent));
+    }
 
     // particles
     for (const p of particles) {
       if (p.type === "confetti") continue;
       drawParticle(p);
     }
+
+    if (TALL_GRASS.length) drawTallGrassForeground();
+  }
+
+  function addSeekerLight(ent) {
+    const modeIndex = ent.lightMode === 2 ? 2 : ent.lightMode === 1 ? 1 : 0;
+    const mode = SEEKER_LIGHT_MODES[modeIndex];
+    const sprite =
+      modeIndex === 2
+        ? revealGlow
+        : modeIndex === 1
+        ? beams.seekerWide
+        : beams.seekerLong;
+    addPlayerLight(
+      ent,
+      sprite,
+      FLASHLIGHT.range * mode.rangeMult,
+      modeIndex === 2
+    );
+  }
+
+  function addHiderLight(hider, allowHidden) {
+    if (!hider.alive) return;
+    if (!allowHidden && hider.insideHide) return;
+    const sprite = online.inMatch ? beams.hiderOnline : beams.hider;
+    const rangeMult = online.inMatch ? 0.8 : FLASHLIGHT.hiderRangeMult;
+    addPlayerLight(hider, sprite, FLASHLIGHT.range * rangeMult);
   }
 
   function drawDarkness(shakeX, shakeY) {
@@ -3241,30 +5089,43 @@
     d.fillStyle = "#000";
     d.fillRect(0, 0, VIEW_W, VIEW_H);
 
-    for (const ent of activeSeekers()) {
-      const modeIndex =
-        ent.lightMode === 2 ? 2 : ent.lightMode === 1 ? 1 : 0;
-      const mode = SEEKER_LIGHT_MODES[modeIndex];
-      const sprite =
-        modeIndex === 2
-          ? revealGlow
-          : modeIndex === 1
-          ? beams.seekerWide
-          : beams.seekerLong;
-      addPlayerLight(
-        ent,
-        sprite,
-        FLASHLIGHT.range * mode.rangeMult,
-        modeIndex === 2
-      );
-    }
-    for (const hider of hiders) {
-      if (!hider.alive || hider.insideHide) continue;
-      addPlayerLight(
-        hider,
-        beams.hider,
-        FLASHLIGHT.range * FLASHLIGHT.hiderRangeMult
-      );
+    if (online.inMatch) {
+      const viewerSeeker = onlineViewerSeeker();
+      const viewerHider = onlineViewerHider();
+      if (viewerSeeker) {
+        addSeekerLight(viewerSeeker);
+        if (phase === PHASE.SEEK) {
+          for (const hider of hiders) {
+            if (!hider.alive || hider.insideHide) continue;
+            if (
+              segmentBlocked(
+                viewerSeeker.x,
+                viewerSeeker.y,
+                hider.x,
+                hider.y
+              )
+            ) {
+              continue;
+            }
+            addHiderLight(hider, false);
+          }
+        }
+      } else if (viewerHider) {
+        addHiderLight(viewerHider, true);
+        for (const ent of activeSeekers()) addSeekerLight(ent);
+      } else {
+        for (const ent of activeSeekers()) addSeekerLight(ent);
+        for (const hider of hiders) {
+          if (!hider.alive || hider.insideHide) continue;
+          addHiderLight(hider, false);
+        }
+      }
+    } else {
+      for (const ent of activeSeekers()) addSeekerLight(ent);
+      for (const hider of hiders) {
+        if (!hider.alive || hider.insideHide) continue;
+        addHiderLight(hider, false);
+      }
     }
     for (const lamp of LAMPS) addLampLight(lamp);
 
@@ -3462,13 +5323,40 @@
       ctx.restore();
     }
 
+    const viewerHider = online.inMatch ? onlineViewerHider() : null;
+    const viewerHiderGroup = viewerHider ? viewerHider.ctrl : null;
     for (const hider of hiders) {
       if (!hider.alive || hider.revealT <= 0) continue;
+      if (
+        online.inMatch &&
+        viewerHiderGroup &&
+        hider.ctrl !== viewerHiderGroup
+      ) {
+        continue;
+      }
       const role = hider.id === 1 ? "hider2" : "hider";
       if (hider.insideHide) {
         drawPlayerSprite(hider, role);
       }
       drawReticle(hider.x, hider.y, hider.revealT / CFG.pingReveal);
+    }
+
+    if (viewerHider) {
+      for (const hider of hiders) {
+        if (!hider.alive || hider.ctrl === viewerHiderGroup) continue;
+        const role = hider.id === 1 ? "hider2" : "hider";
+        const hidden = hider.insideHide;
+        drawPlayerSprite(hider, role, hidden ? 0.42 : 0.92);
+        if (hidden) {
+          ctx.save();
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = "#050807";
+          ctx.beginPath();
+          ctx.arc(hider.x, hider.y, R + 1.5, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
     }
 
     for (const hider of hiders) {
@@ -3578,6 +5466,14 @@
       ctx.fill();
     } else if (p.type === "confetti") {
       ctx.fillRect(-p.size, -p.size * 0.45, p.size * 2, p.size * 0.9);
+    } else if (p.type === "sweat") {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size * 0.55, p.size, 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      ctx.beginPath();
+      ctx.arc(-p.size * 0.16, -p.size * 0.3, p.size * 0.22, 0, TAU);
+      ctx.fill();
     } else {
       ctx.beginPath();
       ctx.arc(0, 0, p.size, 0, TAU);
@@ -3641,7 +5537,7 @@
     }
 
     // stamina bar
-    if (p.stamina < 99.5) {
+    if (!tagMode && p.stamina < 99.5) {
       const bw = 32;
       const bx = p.x - bw / 2;
       const by = p.y + R + 5;
@@ -3653,8 +5549,24 @@
       }
     }
 
+    if (tagMode && p.tagBoostT > 0) {
+      const pct = clamp(p.tagBoostT / CFG.tag.transferBoostTime, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = op * (0.3 + 0.5 * pct);
+      ctx.strokeStyle = body;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, R + 9 + Math.sin(time * 14) * 2, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // seeker ping cooldown ring
-    if (isSeeker && (phase === PHASE.HIDE || phase === PHASE.SEEK)) {
+    if (
+      !tagMode &&
+      isSeeker &&
+      (phase === PHASE.HIDE || phase === PHASE.SEEK)
+    ) {
       const cooldown = hardMode
         ? CFG.hard.radarCooldown
         : CFG.pingCooldown;
@@ -3669,8 +5581,8 @@
       ctx.restore();
     }
 
-    // hider number tag in 3-player mode
-    if (!isSeeker && mode === 3 && p.alive) {
+    // hider number tag in multi-hider modes
+    if (!isSeeker && hiders.length > 1 && p.alive) {
       ctx.fillStyle = "rgba(8, 17, 12, 0.8)";
       ctx.beginPath();
       ctx.arc(p.x, p.y - R - 11, 7.5, 0, TAU);
@@ -3716,16 +5628,32 @@
     const hider = hiders.find((h) => h.ctrl === group);
     if (!hider) return null;
     return {
-      label: twoSeekers ? "HIDER" : mode === 3 ? `HIDER ${hider.id + 1}` : "HIDER",
+      label: hiders.length > 1 ? `HIDER ${hider.id + 1}` : "HIDER",
       color,
       isSeeker: false,
     };
   }
 
   function drawBottomHints() {
-    const y = HUD_H + VIEW_H - 9;
+    const y = HUD_H + VIEW_H - 21;
     ctx.save();
     ctx.textBaseline = "middle";
+    if (online.inMatch) {
+      const role = roleForGroup(onlineIsHost() ? "h1" : online.myGroup);
+      ctx.textAlign = "center";
+      ctx.font = `600 10px ${FONT}`;
+      ctx.fillStyle = role ? role.color : "rgba(125, 211, 252, 0.7)";
+      const who = onlineIsHost() ? "ONLINE HOST" : `ONLINE · P${online.mySlot + 1}`;
+      ctx.fillText(
+        `${who}${role ? " · " + role.label : ""} · ESC ${
+          onlineIsHost() ? "lobby" : "leave"
+        }`,
+        VIEW_W / 2,
+        y
+      );
+      ctx.restore();
+      return;
+    }
     if (aiMode) {
       ctx.textAlign = "center";
       ctx.font = `600 10px ${FONT}`;
@@ -3739,15 +5667,22 @@
       const role = roleForGroup(group);
       if (!role) return;
       const bind = controls[group];
-      let detail = `${moveLabel(bind)} · ${keyLabel(bind.light)} ${
-        role.isSeeker ? "mode" : "light"
-      }`;
-      if (!role.isSeeker) {
-        detail = `${moveLabel(bind)} · ${keyLabel(bind.sprint)} ${
-          hardMode ? "dash" : "sprint"
-        } · ${keyLabel(bind.light)} light`;
+      let detail;
+      if (tagMode) {
+        detail = role.isSeeker
+          ? `${moveLabel(bind)} · 60° slow cone`
+          : `${moveLabel(bind)} · grass hides`;
       } else {
-        detail += ` · ${keyLabel(bind.ping)} ${hardMode ? "radar" : "ping"}`;
+        detail = `${moveLabel(bind)} · ${keyLabel(bind.light)} ${
+          role.isSeeker ? "mode" : "light"
+        }`;
+        if (!role.isSeeker) {
+          detail = `${moveLabel(bind)} · ${keyLabel(bind.sprint)} ${
+            hardMode ? "dash" : "sprint"
+          } · ${keyLabel(bind.light)} light`;
+        } else {
+          detail += ` · ${keyLabel(bind.ping)} ${hardMode ? "radar" : "ping"}`;
+        }
       }
 
       ctx.font = `700 10px ${FONT}`;
@@ -3770,19 +5705,21 @@
       ctx.globalAlpha = 1;
     }
 
-    drawHint("h1", "left", 22);
-    drawHint("seeker", "right", VIEW_W - 22);
-    if (mode === 3) {
-      drawHint("h2", "center", VIEW_W / 2);
+    const groups = playerGroups();
+    drawHint(groups[0], "left", 22);
+    drawHint(groups[groups.length - 1], "right", VIEW_W - 22);
+    const middles = groups.slice(1, -1);
+    if (middles.length) {
+      middles.forEach((group, index) => {
+        const anchor =
+          VIEW_W / 2 + (index - (middles.length - 1) / 2) * 230;
+        drawHint(group, "center", anchor);
+      });
     } else {
       ctx.textAlign = "center";
       ctx.font = `600 10px ${FONT}`;
       ctx.fillStyle = "rgba(214, 238, 224, 0.32)";
-      ctx.fillText(
-        `ROUND ${roundNum}`,
-        VIEW_W / 2,
-        y
-      );
+      ctx.fillText(`ROUND ${roundNum}`, VIEW_W / 2, y);
     }
     ctx.restore();
   }
@@ -3814,7 +5751,7 @@
     let barColor = "rgba(255, 255, 255, 0.75)";
 
     if (phase === PHASE.READY) {
-      phaseLabel = "HIDE & SEEK";
+      phaseLabel = tagMode ? "TAG MODE" : "HIDE & SEEK";
     } else if (phase === PHASE.START) {
       phaseLabel = `ROUND ${roundNum} · GET READY`;
       timerText = String(Math.max(0, Math.ceil(phaseLeft)));
@@ -3868,15 +5805,23 @@
       ctx.fillStyle = "rgba(255, 130, 130, 0.75)";
       ctx.fillText("HARD", 22, 26);
     }
+    if (tagMode) {
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 10px ${FONT}`;
+      ctx.fillStyle = "rgba(255, 209, 102, 0.85)";
+      ctx.fillText("TAG", 22, hardMode ? 40 : 26);
+    }
     if (aiMode) {
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.font = `700 10px ${FONT}`;
       ctx.fillStyle = "rgba(125, 211, 252, 0.75)";
-      ctx.fillText("AI", 22, hardMode ? 40 : 26);
+      ctx.fillText("AI", 22, hardMode || tagMode ? 40 : 26);
     }
 
     if (
+      !tagMode &&
       seekerDoorBoost > 1.001 &&
       (phase === PHASE.HIDE || phase === PHASE.SEEK)
     ) {
@@ -3962,7 +5907,7 @@
     ctx.fillStyle = "#effff6";
     ctx.shadowColor = "rgba(94, 224, 138, 0.25)";
     ctx.shadowBlur = 26;
-    ctx.fillText("HIDE & SEEK", CW / 2, 136);
+    ctx.fillText(tagMode ? "TAG" : "HIDE & SEEK", CW / 2, 136);
     ctx.shadowBlur = 0;
 
     ctx.font = `500 16px ${FONT}`;
@@ -3971,7 +5916,10 @@
 
     drawModeButton(MENU.b2, 2, "2 PLAYERS", mode === 2);
     drawModeButton(MENU.b3, 3, "3 PLAYERS", mode === 3 && !twoSeekers);
+    drawModeButton(MENU.four, 4, "4 PLAYERS", mode === 4);
     drawModeButton(MENU.duo, 3, "2 SEEKERS", mode === 3 && twoSeekers);
+    drawTagButton();
+    drawOnlineButton();
     drawMapButton();
     drawHardButton();
     drawAiButton();
@@ -4007,51 +5955,30 @@
 
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.55)";
-    ctx.fillText("← / → or 2 / 3 / 4 · click to switch", CW / 2, 262);
+    ctx.fillText("← / → or 2 / 3 / 4 / 5 · click to switch", CW / 2, 262);
 
-    const isThree = mode === 3;
-    const isDuo = twoSeekers && isThree;
-    const previewHiderGroups = isDuo
-      ? [duoHiderGroupForRound(roundNum)]
-      : hiderGroupsForRound(roundNum);
-    const previewSeekerGroups = isDuo
-      ? duoSeekerGroupsForRound(roundNum)
-      : [seekerGroupForRound(roundNum)];
-    const seekerBind = controls[previewSeekerGroups[0]];
+    const previewHiderGroups = hiderGroupsForRound(roundNum);
+    const hiderCount = previewHiderGroups.length;
+    const multiSeekers = twoSeekerMode();
+    const previewSeekerGroups = seekerGroupsForRound(roundNum);
 
-    const hiderRows = isDuo
-      ? (() => {
-          const bind = controls[previewHiderGroups[0]];
-          return [
-            ["MOVE", moveLabel(bind)],
-            [hardMode ? "DASH" : "SPRINT", keyLabel(bind.sprint)],
-            ["LIGHT", keyLabel(bind.light)],
-            ["HIDEOUTS", "vanish"],
-          ];
-        })()
-      : isThree
-      ? previewHiderGroups
-          .map((group) => {
-            const hider = hiders.find((h) => h.ctrl === group);
-            const bind = controls[group];
-            return [
-              hider ? `HIDER ${hider.id + 1}` : "HIDER",
-              `${moveLabel(bind)} · ${keyLabel(bind.sprint)} ${
-                hardMode ? "dash" : "sprint"
-              } · ${keyLabel(bind.light)} light`,
-              hider ? hider.color : GREEN,
-            ];
-          })
-          .concat([["HIDEOUTS", "vanish"]])
-      : (() => {
-          const bind = controls[previewHiderGroups[0]];
-          return [
-            ["MOVE", moveLabel(bind)],
-            [hardMode ? "DASH" : "SPRINT", keyLabel(bind.sprint)],
-            ["LIGHT", keyLabel(bind.light)],
-            ["HIDEOUTS", "vanish"],
-          ];
-        })();
+    const hiderRows = previewHiderGroups
+      .map((group) => {
+        const hider = hiders.find((h) => h.ctrl === group);
+        const bind = controls[group];
+        const label = hider
+          ? hiderCount > 1
+            ? `HIDER ${hider.id + 1}`
+            : "HIDER"
+          : "HIDER";
+        const value = tagMode
+          ? `${moveLabel(bind)} · grass hides · mud slows`
+          : `${moveLabel(bind)} · ${keyLabel(bind.sprint)} ${
+              hardMode ? "dash" : "sprint"
+            } · ${keyLabel(bind.light)} light`;
+        return [label, value, hider ? hider.color : GREEN];
+      })
+      .concat([["HIDEOUTS", tagMode ? "tall grass" : "vanish"]]);
 
     drawControlCard(
       70,
@@ -4059,70 +5986,67 @@
       440,
       200,
       GREEN,
-      isDuo ? "HIDER" : isThree ? "HIDERS" : "HIDER",
+      hiderCount > 1 ? "HIDERS" : "HIDER",
       hiderRows,
-      hardMode
-        ? mode === 2 || twoSeekers
+      tagMode
+        ? "TAG: no sprint · bushes and grass conceal · mud slows."
+        : hardMode
+        ? mode === 2 || multiSeekers
           ? "HARD: dash · spikes slow 3s."
           : "HARD: dash · spikes bleed 7s · heal 2.5s."
         : "+25% head start · 50% seek speed."
     );
 
-    const seekerRows = isDuo
-      ? previewSeekerGroups
-          .map((group) => {
-            const bind = controls[group];
-            return [
-              playerName(group),
-              `${moveLabel(bind)} · ${keyLabel(bind.light)} mode · ${keyLabel(
-                bind.ping
-              )} ${hardMode ? "radar" : "ping"}`,
-              PLAYER_COLORS[group] || RED,
-            ];
-          })
-          .concat([["SPRINT", "locked"]])
-      : [
-          ["MOVE", moveLabel(seekerBind)],
-          [hardMode ? "RADAR" : "PING", keyLabel(seekerBind.ping)],
-          ["LIGHT MODE", keyLabel(seekerBind.light)],
-          ["SPRINT", "locked"],
-        ];
+    const seekerRows = previewSeekerGroups
+      .map((group) => {
+        const bind = controls[group];
+        const value = tagMode
+          ? `${moveLabel(bind)} · 60° light slows 15%`
+          : `${moveLabel(bind)} · ${keyLabel(bind.light)} mode · ${keyLabel(
+              bind.ping
+            )} ${hardMode ? "radar" : "ping"}`;
+        return [playerName(group), value, PLAYER_COLORS[group] || RED];
+      })
+      .concat([["SPRINT", tagMode ? "off" : "locked"]]);
 
     drawControlCard(
       530,
       286,
       400,
       200,
-      isDuo ? RED : PLAYER_COLORS[previewSeekerGroups[0]] || RED,
-      isDuo ? "SEEKERS" : "SEEKER",
+      multiSeekers ? RED : PLAYER_COLORS[previewSeekerGroups[0]] || RED,
+      multiSeekers ? "SEEKERS" : "SEEKER",
       seekerRows,
-      hardMode
-        ? twoSeekers && isThree
+      tagMode
+        ? "TAG: tag = 1s stun + 2s escape boost for the old seeker."
+        : hardMode
+        ? multiSeekers
           ? "HARD: radar · spikes eliminate a seeker."
           : "HARD: radar · spikes slow you."
-        : isDuo
-        ? "Catch the hider · 1.15× boost for final 10.5s."
-        : isThree
+        : hiderCount >= 3
+        ? "Catch all three · 1.15× boost for final 10.5s."
+        : hiderCount > 1
         ? "Catch both · 1.15× boost for final 10.5s."
         : "Tag the hider · 1.15× boost for final 10.5s."
     );
 
     const headStart = rules().headStart;
-    const article = headStart === 8 ? "an" : "a";
     ctx.font = `500 14px ${FONT}`;
     ctx.fillStyle = "rgba(198, 226, 210, 0.7)";
     ctx.fillText(
-      isDuo
-        ? `2s ready · the hider gets an ${headStart}s head start while the seekers count · 1s look-back bell.`
-        : isThree
+      tagMode
+        ? `TAG: 2s ready · hiders get a ${headStart}s head start · lights on · 1 seeker · tags transfer the role.`
+        : hiderCount >= 3
+        ? `2s ready · all three hiders get a ${headStart}s head start while the seeker counts · 1s look-back bell.`
+        : hiderCount > 1
         ? `2s ready · both hiders get an ${headStart}s head start while the seeker counts · 1s look-back bell.`
         : `2s ready · the hider gets a ${headStart}s head start while the seeker counts · 1s look-back bell.`,
       CW / 2,
       512
     );
     ctx.fillText(
-      isDuo
-        ? "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.3× (reveals through walls) · roles change."
+      tagMode
+        ? "No sprint · 1 seeker · tags transfer the role · 60° cone slows 15% · bushes and grass conceal · FIELD map."
         : "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.3× (reveals through walls) · roles change.",
       CW / 2,
       534
@@ -4161,6 +6085,239 @@
       CW / 2,
       638
     );
+    ctx.restore();
+  }
+
+
+  function drawBigButton(rect, label, accent, disabled) {
+    const hover = !disabled && pointInRect(mouse.x, mouse.y, rect);
+    ctx.save();
+    roundRectPath(rect.x, rect.y, rect.w, rect.h, 12);
+    const base = accent ? "94, 224, 138" : "125, 211, 252";
+    ctx.fillStyle = disabled
+      ? "rgba(255, 255, 255, 0.035)"
+      : hover
+      ? `rgba(${base}, 0.18)`
+      : `rgba(${base}, 0.08)`;
+    ctx.fill();
+    ctx.strokeStyle = disabled
+      ? "rgba(255, 255, 255, 0.12)"
+      : `rgba(${base}, ${hover ? 0.75 : 0.42})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `800 ${rect.h >= 48 ? 17 : 13}px ${FONT}`;
+    ctx.fillStyle = disabled
+      ? "rgba(198, 226, 210, 0.35)"
+      : "rgba(239, 255, 246, 0.95)";
+    ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+    ctx.restore();
+  }
+
+  function drawOnlineMenu() {
+    drawOverlayBackdrop(0.9);
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `800 52px ${FONT}`;
+    ctx.fillStyle = "#effff6";
+    ctx.shadowColor = "rgba(125, 211, 252, 0.3)";
+    ctx.shadowBlur = 24;
+    ctx.fillText("ONLINE PLAY", CW / 2, 130);
+    ctx.shadowBlur = 0;
+    ctx.font = `500 15px ${FONT}`;
+    ctx.fillStyle = "rgba(198, 226, 210, 0.8)";
+    ctx.fillText("No matchmaking. Create a lobby or join with a code.", CW / 2, 166);
+
+    drawBigButton(ONLINE_UI.create, "CREATE LOBBY", true, false);
+    drawBigButton(ONLINE_UI.join, "JOIN LOBBY", false, false);
+    drawBigButton(ONLINE_UI.back, "BACK", false, false);
+
+    ctx.font = `500 13px ${FONT}`;
+    ctx.fillStyle = "rgba(160, 196, 176, 0.65)";
+    ctx.fillText(
+      "Peer-to-peer · host keeps the lobby alive · up to 4 players",
+      CW / 2,
+      438
+    );
+    if (online.error) {
+      ctx.font = `700 13px ${FONT}`;
+      ctx.fillStyle = "rgba(255, 130, 130, 0.9)";
+      ctx.fillText(online.error, CW / 2, 474);
+    }
+    ctx.font = `500 12px ${FONT}`;
+    ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
+    ctx.fillText("ESC back", CW / 2, 640);
+    ctx.restore();
+  }
+
+  function drawJoinScreen() {
+    drawOverlayBackdrop(0.9);
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `800 48px ${FONT}`;
+    ctx.fillStyle = "#effff6";
+    ctx.shadowColor = "rgba(125, 211, 252, 0.3)";
+    ctx.shadowBlur = 20;
+    ctx.fillText("JOIN LOBBY", CW / 2, 140);
+    ctx.shadowBlur = 0;
+    ctx.font = `500 15px ${FONT}`;
+    ctx.fillStyle = "rgba(198, 226, 210, 0.8)";
+    ctx.fillText("Type the 6-character code your friend shared.", CW / 2, 178);
+
+    roundRectPath(
+      ONLINE_UI.codeBox.x,
+      ONLINE_UI.codeBox.y,
+      ONLINE_UI.codeBox.w,
+      ONLINE_UI.codeBox.h,
+      14
+    );
+    ctx.fillStyle = "rgba(13, 26, 19, 0.95)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(125, 211, 252, 0.5)";
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    const slots = [];
+    for (let i = 0; i < ONLINE_CODE_LEN; i++) {
+      slots.push(online.joinCode[i] || "");
+    }
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `800 34px ${FONT}`;
+    for (let i = 0; i < slots.length; i++) {
+      const x = ONLINE_UI.codeBox.x + 62 + i * 62;
+      const y = ONLINE_UI.codeBox.y + ONLINE_UI.codeBox.h / 2 + 2;
+      ctx.fillStyle = slots[i]
+        ? "rgba(239, 255, 246, 0.95)"
+        : "rgba(160, 196, 176, 0.25)";
+      ctx.fillText(slots[i] || "·", x, y);
+      if (i === online.joinCode.length && Math.sin(time * 6) > 0) {
+        ctx.fillStyle = "rgba(125, 211, 252, 0.8)";
+        ctx.fillRect(x + 16, y - 18, 2, 36);
+      }
+    }
+
+    drawBigButton(
+      ONLINE_UI.codeJoin,
+      online.connecting ? "CONNECTING..." : "JOIN",
+      true,
+      online.connecting
+    );
+    drawBigButton(ONLINE_UI.codeBack, "BACK", false, false);
+
+    if (online.error) {
+      ctx.font = `700 13px ${FONT}`;
+      ctx.fillStyle = "rgba(255, 130, 130, 0.9)";
+      ctx.fillText(online.error, CW / 2, 452);
+    }
+    ctx.font = `500 12px ${FONT}`;
+    ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
+    ctx.fillText("ENTER to join · ESC back", CW / 2, 640);
+    ctx.restore();
+  }
+
+  function drawLobbyScreen() {
+    drawOverlayBackdrop(0.9);
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `800 48px ${FONT}`;
+    ctx.fillStyle = "#effff6";
+    ctx.shadowColor = "rgba(125, 211, 252, 0.3)";
+    ctx.shadowBlur = 20;
+    ctx.fillText("LOBBY", CW / 2, 100);
+    ctx.shadowBlur = 0;
+
+    ctx.font = `500 12px ${FONT}`;
+    ctx.fillStyle = "rgba(160, 196, 176, 0.65)";
+    ctx.fillText("SHARE THIS CODE", CW / 2, 136);
+    ctx.font = `800 40px ${FONT}`;
+    ctx.fillStyle = "rgba(255, 233, 180, 0.98)";
+    ctx.fillText(online.code || "······", CW / 2, 182);
+
+    if (online.code) {
+      drawBigButton(ONLINE_UI.copy, "COPY", false, false);
+    }
+
+    const count = online.players.length;
+    ctx.textAlign = "left";
+    ctx.font = `700 12px ${FONT}`;
+    ctx.fillStyle = "rgba(198, 226, 210, 0.7)";
+    ctx.fillText(`PLAYERS ${count}/${ONLINE_MAX}`, 300, 268);
+    for (let i = 0; i < ONLINE_MAX; i++) {
+      const player = online.players[i];
+      const y = 294 + i * 34;
+      const mine = player && player.slot === online.mySlot;
+      ctx.font = `700 14px ${FONT}`;
+      ctx.fillStyle = player
+        ? PLAYER_COLORS[player.group] || "#effff6"
+        : "rgba(160, 196, 176, 0.25)";
+      ctx.fillText(
+        player
+          ? `${player.name}${player.host ? " · HOST" : ""}${mine ? " · YOU" : ""}`
+          : `P${i + 1} · waiting...`,
+        300,
+        y
+      );
+    }
+
+    const mapName = MAPS[online.config.tag ? FIELD_INDEX : online.config.map].name;
+    ctx.textAlign = "center";
+    ctx.font = `700 13px ${FONT}`;
+    ctx.fillStyle = "rgba(214, 238, 224, 0.75)";
+    ctx.fillText(
+      `${count} PLAYERS · TAG ${online.config.tag ? "ON" : "OFF"} · MAP ${mapName}`,
+      CW / 2,
+      452
+    );
+
+    if (onlineIsHost()) {
+      drawBigButton(
+        ONLINE_UI.tag,
+        online.config.tag ? "TAG ON" : "TAG OFF",
+        online.config.tag,
+        count < 3 && !online.config.tag
+      );
+      drawBigButton(
+        ONLINE_UI.map,
+        "MAP · " + mapName,
+        false,
+        online.config.tag
+      );
+      drawBigButton(
+        ONLINE_UI.start,
+        online.connecting
+          ? "CREATING LOBBY..."
+          : count < 2
+          ? "NEED 2+ PLAYERS"
+          : "START MATCH",
+        true,
+        online.connecting || count < 2
+      );
+    } else {
+      ctx.font = `800 18px ${FONT}`;
+      ctx.fillStyle = "rgba(239, 255, 246, 0.8)";
+      ctx.fillText(
+        online.connecting ? "CONNECTING..." : "WAITING FOR HOST...",
+        CW / 2,
+        574
+      );
+    }
+
+    drawBigButton(ONLINE_UI.leave, onlineIsHost() ? "CLOSE LOBBY" : "LEAVE", false, false);
+
+    ctx.textAlign = "center";
+    ctx.font = `600 13px ${FONT}`;
+    if (online.error) {
+      ctx.fillStyle = "rgba(255, 130, 130, 0.9)";
+      ctx.fillText(online.error, CW / 2, 660);
+    } else if (online.notice) {
+      ctx.fillStyle = "rgba(255, 209, 102, 0.9)";
+      ctx.fillText(online.notice, CW / 2, 660);
+    }
     ctx.restore();
   }
 
@@ -4203,7 +6360,9 @@
       ctx.fillStyle = card.color;
       ctx.fillText(card.title, card.x + 22, card.y + 52);
 
-      const tip = hardMode
+      const tip = tagMode
+        ? "TAG: no sprint · grass and bushes hide"
+        : hardMode
         ? "HARD: dash / radar · spikes"
         : "Seeker: light modes, no sprint.";
       ctx.font = `500 11px ${FONT}`;
@@ -4411,7 +6570,7 @@
 
   function drawHardButton() {
     const rect = MENU.hard;
-    const hover = pointInRect(mouse.x, mouse.y, rect);
+    const hover = !tagMode && pointInRect(mouse.x, mouse.y, rect);
     ctx.save();
     roundRectPath(rect.x, rect.y, rect.w, rect.h, 7);
     ctx.fillStyle = hardMode
@@ -4428,11 +6587,13 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `800 ${rect.h >= 40 ? 11 : 9}px ${FONT}`;
-    ctx.fillStyle = hardMode
+    ctx.fillStyle = tagMode
+      ? "rgba(198, 226, 210, 0.28)"
+      : hardMode
       ? "rgba(255, 225, 225, 0.95)"
       : "rgba(198, 226, 210, 0.6)";
     ctx.fillText(
-      hardMode ? "HARD ON" : "HARD OFF",
+      tagMode ? "HARD N/A" : hardMode ? "HARD ON" : "HARD OFF",
       rect.x + rect.w / 2,
       rect.y + rect.h / 2 + 1
     );
@@ -4465,24 +6626,78 @@
     ctx.restore();
   }
 
-  function drawMapButton() {
-    const rect = MENU.map;
+  function drawOnlineButton() {
+    const rect = MENU.online;
     const hover = pointInRect(mouse.x, mouse.y, rect);
     ctx.save();
     roundRectPath(rect.x, rect.y, rect.w, rect.h, 7);
     ctx.fillStyle = hover
+      ? "rgba(125, 211, 252, 0.14)"
+      : "rgba(125, 211, 252, 0.06)";
+    ctx.fill();
+    ctx.strokeStyle = hover
+      ? "rgba(125, 211, 252, 0.65)"
+      : "rgba(125, 211, 252, 0.32)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `800 9px ${FONT}`;
+    ctx.fillStyle = "rgba(225, 248, 255, 0.92)";
+    ctx.fillText("ONLINE", rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+    ctx.restore();
+  }
+
+  function drawTagButton() {
+    const rect = MENU.tag;
+    const hover = pointInRect(mouse.x, mouse.y, rect);
+    ctx.save();
+    roundRectPath(rect.x, rect.y, rect.w, rect.h, 7);
+    ctx.fillStyle = tagMode
+      ? "rgba(255, 209, 102, 0.17)"
+      : hover
+      ? "rgba(255, 255, 255, 0.06)"
+      : "rgba(255, 255, 255, 0.03)";
+    ctx.fill();
+    ctx.strokeStyle = tagMode
+      ? "rgba(255, 209, 102, 0.8)"
+      : "rgba(255, 255, 255, 0.12)";
+    ctx.lineWidth = tagMode ? 1.8 : 1;
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `800 ${rect.h >= 40 ? 11 : 9}px ${FONT}`;
+    ctx.fillStyle = tagMode
+      ? "rgba(255, 246, 220, 0.98)"
+      : "rgba(198, 226, 210, 0.6)";
+    ctx.fillText(tagMode ? "TAG ON" : "TAG OFF", rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+    ctx.restore();
+  }
+
+  function drawMapButton() {
+    const rect = MENU.map;
+    const hover = !tagMode && pointInRect(mouse.x, mouse.y, rect);
+    ctx.save();
+    roundRectPath(rect.x, rect.y, rect.w, rect.h, 7);
+    ctx.fillStyle = tagMode
+      ? "rgba(255, 209, 102, 0.1)"
+      : hover
       ? "rgba(255, 255, 255, 0.07)"
       : "rgba(255, 255, 255, 0.03)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.strokeStyle = tagMode
+      ? "rgba(255, 209, 102, 0.35)"
+      : "rgba(255, 255, 255, 0.14)";
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `800 ${rect.h >= 40 ? 13 : 10}px ${FONT}`;
-    ctx.fillStyle = "rgba(239, 255, 246, 0.9)";
+    ctx.fillStyle = tagMode
+      ? "rgba(255, 233, 180, 0.9)"
+      : "rgba(239, 255, 246, 0.9)";
     ctx.fillText(
-      `MAP ${mapIndex + 1} · ${MAPS[mapIndex].name}`,
+      tagMode ? "MAP · FIELD" : `MAP ${mapIndex + 1} · ${MAPS[mapIndex].name}`,
       rect.x + rect.w / 2,
       rect.y + rect.h / 2 + 1
     );
@@ -4508,15 +6723,16 @@
     ctx.fillText(title, x + 22, y + 50);
 
     let ry = y + 82;
+    const valueSize = w < 420 ? 12 : 13;
     for (const row of rows) {
       const key = row[0];
       const what = row[1];
       const rowColor = row[2];
-      ctx.font = `700 13px ${FONT}`;
+      ctx.font = `700 ${valueSize}px ${FONT}`;
       ctx.fillStyle = rowColor || "rgba(236, 250, 242, 0.9)";
       ctx.fillText(key, x + 22, ry);
       const kw = ctx.measureText(key).width;
-      ctx.font = `500 13px ${FONT}`;
+      ctx.font = `500 ${valueSize}px ${FONT}`;
       ctx.fillStyle = "rgba(170, 203, 183, 0.7)";
       ctx.fillText("— " + what, x + 22 + kw + 8, ry);
       ry += 24;
@@ -4542,11 +6758,18 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
 
+    const endTitle = tagMode
+      ? seekerWon
+        ? "SEEKER WON"
+        : "SEEKER LOST"
+      : seekerWon
+      ? "SEEKER WON"
+      : "HIDER WON";
     ctx.font = `800 58px ${FONT}`;
     ctx.fillStyle = color;
     ctx.shadowColor = color + "55";
     ctx.shadowBlur = 24;
-    ctx.fillText(seekerWon ? "SEEKER WON" : "HIDER WON", CW / 2, 270);
+    ctx.fillText(endTitle, CW / 2, 270);
     ctx.shadowBlur = 0;
 
     ctx.font = `500 16px ${FONT}`;
@@ -4557,14 +6780,26 @@
     ctx.font = `800 20px ${FONT}`;
     ctx.fillStyle = `rgba(239, 255, 246, ${a})`;
     ctx.fillText(
-      aiMode ? "NEXT ROUND STARTING..." : "PRESS SPACE FOR NEXT ROUND",
+      aiMode
+        ? "NEXT ROUND STARTING..."
+        : online.inMatch && onlineIsClient()
+        ? "WAITING FOR HOST..."
+        : "PRESS SPACE FOR NEXT ROUND",
       CW / 2,
       474
     );
 
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
-    ctx.fillText("ESC for menu", CW / 2, 520);
+    ctx.fillText(
+      online.inMatch
+        ? onlineIsHost()
+          ? "ESC for lobby"
+          : "ESC to leave"
+        : "ESC for menu",
+      CW / 2,
+      520
+    );
     ctx.restore();
   }
 
@@ -4596,6 +6831,16 @@
     ctx.restore();
   }
 
+  function drawCredit() {
+    ctx.save();
+    ctx.font = `600 9px ${FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "rgba(170, 194, 180, 0.42)";
+    ctx.fillText("made by mrketchup1st", 8, CH - 6);
+    ctx.restore();
+  }
+
   // ---------------------------------------------------------------------------
   // Frame
   // ---------------------------------------------------------------------------
@@ -4617,16 +6862,22 @@
     drawWorld();
     ctx.restore();
 
-    drawDarkness(shakeX, shakeY);
+    if (!tagMode) drawDarkness(shakeX, shakeY);
     drawAboveDarkness(shakeX, shakeY);
 
     drawBottomHints();
     drawHud();
     drawMuteBadge();
 
-    if (menuScreen === "controls") {
+    if (menuScreen === "online") {
+      drawOnlineMenu();
+    } else if (menuScreen === "join") {
+      drawJoinScreen();
+    } else if (menuScreen === "lobby") {
+      drawLobbyScreen();
+    } else if (menuScreen === "controls") {
       drawControlsScreen();
-    } else if (phase === PHASE.READY || menuOpen) {
+    } else if (!online.inMatch && (phase === PHASE.READY || menuOpen)) {
       drawStartScreen();
     } else if (phase === PHASE.OVER || phase === PHASE.MATCH) {
       drawEndScreen();
@@ -4644,6 +6895,8 @@
     ) {
       drawPauseOverlay();
     }
+
+    drawCredit();
   }
 
   let last = 0;
@@ -4669,11 +6922,31 @@
     dt = Math.min(dt, 0.05);
 
     time += dt;
-    if (!paused) update(dt);
+    if (!paused) {
+      if (online.inMatch && onlineIsClient()) onlineClientTick(dt);
+      else update(dt);
+    }
+    if (online.inMatch && onlineIsClient()) onlineSendClientInput(now);
+    else if (online.inMatch && onlineIsHost()) onlineMaybeSendState(now);
     draw();
   }
 
   // Kick things off at spawn so the menu has a nice backdrop.
+  if (tagMode) {
+    if (mode === 2) {
+      mode = 3;
+      saveMode();
+    }
+    if (twoSeekers) {
+      twoSeekers = false;
+      saveTwoSeekers();
+    }
+    hardMode = false;
+    saveHardMode();
+    applyMap(FIELD_INDEX);
+  } else {
+    applyMap(mapIndex);
+  }
   resetEntities();
   requestAnimationFrame(loop);
 })();
