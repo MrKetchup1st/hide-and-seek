@@ -23,13 +23,21 @@
   const GREEN = "#5ee08a";
   const TEAL = "#5ee0d8";
   const RED = "#ff6b6b";
-  const PLAYER_COLORS = { h1: GREEN, h2: TEAL, p4: "#ffd166", seeker: RED };
+  const PLAYER_COLORS = {
+    h1: GREEN,
+    h2: TEAL,
+    p4: "#ffd166",
+    seeker: RED,
+    p5: "#c084fc",
+    p6: "#fb923c",
+  };
   const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
-  const ONLINE_GROUPS = ["h1", "h2", "p4", "seeker"];
-  const ONLINE_MAX = 4;
+  const ONLINE_GROUPS = ["h1", "h2", "p4", "seeker", "p5", "p6"];
+  const ONLINE_MAX = 6;
+  const ONLINE_LOCAL_MAX = 3;
   const ONLINE_CODE_LEN = 6;
-  const ONLINE_STATE_HZ = 30;
+  const ONLINE_STATE_HZ = 20;
   const ONLINE_INPUT_HZ = 20;
   const ONLINE_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -48,13 +56,21 @@
 
   const RULES = {
     2: { headStart: 6, seekTime: 75 },
-    3: { headStart: 8, seekTime: 150 },
-    4: { headStart: 8, seekTime: 180 },
+    3: { headStart: 8, seekTime: 90 },
+    4: { headStart: 8, seekTime: 120 },
+    5: { headStart: 8, seekTime: 210 },
+    6: { headStart: 8, seekTime: 240 },
     twoSeekers: { headStart: 8, seekTime: 35 },
   };
 
-  const TAG_RULES = { headStart: 5, seekTime: 90 };
-  const TAG_RULES_4 = { headStart: 5, seekTime: 120 };
+  const ONLINE_RULES = {
+    3: { headStart: 8, seekTime: 150 },
+    4: { headStart: 8, seekTime: 180 },
+  };
+
+  const TAG_RULES = { headStart: 5, seekTime: 120 };
+  const TAG_RULES_4 = { headStart: 5, seekTime: 150 };
+  const TAG_RULES_LARGE = { headStart: 5, seekTime: 180 };
 
   const CFG = {
     tagDist: 43,
@@ -104,18 +120,26 @@
       min: 25,
     },
     tag: {
-      hiderWalk: 300,
-      seekerWalk: 315,
-      mudSlow: 0.55,
+      hiderWalk: 240,
+      seekerWalk: 240,
+      snowPileSlow: 0.55,
       grassSlow: 0.8,
-      cone: 60,
+      cone: 40,
       coneRange: 320,
-      coneSlow: 0.85,
+      coneSlow: 0.95,
       coneSlowTime: 0.25,
       revealDist: 110,
       transferStun: 1,
       transferBoost: 2,
       transferBoostTime: 2,
+      snowCoatTime: 4,
+      snowballWind: 0.2,
+      snowballWindSlow: 0.25,
+      snowballCooldown: 1,
+      snowballRange: 900,
+      snowballSlow: 0.8,
+      snowballSlowTime: 2,
+      snowballMarkTime: 2.5,
     },
   };
 
@@ -296,6 +320,51 @@
     { x: 1760, y: 990, w: 60, h: 90 },
   ];
 
+  const GRASSLANDS_WALLS = [
+    { x: 320, y: 260, w: 260, h: 22 },
+    { x: 760, y: 200, w: 22, h: 220 },
+    { x: 1050, y: 420, w: 300, h: 22 },
+    { x: 1500, y: 260, w: 260, h: 22 },
+    { x: 1760, y: 260, w: 22, h: 240 },
+    { x: 420, y: 720, w: 300, h: 22 },
+    { x: 900, y: 860, w: 22, h: 240 },
+    { x: 1200, y: 720, w: 300, h: 22 },
+    { x: 1650, y: 820, w: 260, h: 22 },
+    { x: 600, y: 1080, w: 260, h: 22 },
+    { x: 1500, y: 1080, w: 300, h: 22 },
+  ];
+
+  const GRASSLANDS_HIDES = [
+    { x: 120, y: 120, w: 160, h: 120, type: "building" },
+    { x: 880, y: 160, w: 180, h: 120, type: "building" },
+    { x: 1300, y: 520, w: 160, h: 130, type: "building" },
+    { x: 300, y: 920, w: 170, h: 120, type: "building" },
+    { x: 1800, y: 900, w: 160, h: 120, type: "building" },
+    { x: 620, y: 360, w: 110, h: 80, type: "bush" },
+    { x: 1450, y: 160, w: 110, h: 80, type: "bush" },
+    { x: 1000, y: 620, w: 120, h: 90, type: "bush" },
+    { x: 1850, y: 620, w: 110, h: 80, type: "bush" },
+  ];
+
+  const GRASSLANDS_GRASS = [
+    { x: 200, y: 340, w: 220, h: 170, variant: 0 },
+    { x: 700, y: 620, w: 260, h: 180, variant: 1 },
+    { x: 1150, y: 200, w: 220, h: 160, variant: 2 },
+    { x: 1500, y: 780, w: 260, h: 190, variant: 0 },
+    { x: 400, y: 1120, w: 260, h: 150, variant: 1 },
+    { x: 1800, y: 340, w: 220, h: 160, variant: 2 },
+  ];
+
+  const GRASSLANDS_SPAWN = {
+    hiders: [
+      { x: 1050, y: 640 },
+      { x: 1120, y: 820 },
+      { x: 980, y: 980 },
+    ],
+    seeker: { x: 70, y: 70 },
+    seeker2: { x: 140, y: 70 },
+  };
+
   const FIELD_WALLS = [
     { x: 420, y: 240, w: 360, h: 26 },
     { x: 420, y: 240, w: 26, h: 220 },
@@ -317,22 +386,39 @@
     { x: 1800, y: 1060, w: 26, h: 260 },
     { x: 2080, y: 1180, w: 300, h: 26 },
     { x: 1980, y: 460, w: 26, h: 200 },
+    { x: 300, y: 540, w: 220, h: 26 },
+    { x: 760, y: 900, w: 26, h: 220 },
+    { x: 980, y: 520, w: 220, h: 26 },
+    { x: 1560, y: 620, w: 26, h: 220 },
+    { x: 1780, y: 480, w: 220, h: 26 },
+    { x: 340, y: 1120, w: 200, h: 26 },
+    { x: 1650, y: 1120, w: 200, h: 26 },
+    { x: 2050, y: 900, w: 220, h: 26 },
   ];
 
   const FIELD_HIDES = [
     { x: 950, y: 420, w: 100, h: 80, type: "bush" },
     { x: 2040, y: 900, w: 110, h: 90, type: "bush" },
+    { x: 1450, y: 620, w: 100, h: 80, type: "bush" },
+    { x: 500, y: 760, w: 110, h: 90, type: "bush" },
   ];
 
-  const FIELD_MUD = [
+  const SNOW_PILES_BASE = [
     { x: 700, y: 420, rx: 110, ry: 70 },
     { x: 1600, y: 760, rx: 120, ry: 75 },
+    { x: 400, y: 1000, rx: 110, ry: 70 },
+    { x: 1150, y: 700, rx: 120, ry: 75 },
+    { x: 2100, y: 300, rx: 100, ry: 65 },
+    { x: 2350, y: 1200, rx: 110, ry: 70 },
   ];
 
   const FIELD_TALL_GRASS = [
     { x: 250, y: 160, w: 220, h: 180, variant: 0 },
     { x: 1250, y: 200, w: 260, h: 200, variant: 1 },
     { x: 2200, y: 800, w: 240, h: 220, variant: 2 },
+    { x: 600, y: 1100, w: 240, h: 180, variant: 1 },
+    { x: 1750, y: 750, w: 220, h: 170, variant: 0 },
+    { x: 900, y: 1000, w: 220, h: 160, variant: 2 },
   ];
 
   const FIELD_SPAWN = {
@@ -344,6 +430,32 @@
     seeker: { x: 250, y: 430 },
     seeker2: { x: 370, y: 430 },
   };
+
+  const TAG_MAP_SCALE = 1.75;
+
+  function scaleTagRects(list) {
+    return list.map((rect) => {
+      const out = { ...rect };
+      for (const key of ["x", "y", "w", "h", "rx", "ry"]) {
+        if (typeof out[key] === "number") {
+          out[key] = Math.round(out[key] * TAG_MAP_SCALE);
+        }
+      }
+      return out;
+    });
+  }
+
+  function scaleTagSpawn(spawn) {
+    const point = (p) => ({
+      x: Math.round(p.x * TAG_MAP_SCALE),
+      y: Math.round(p.y * TAG_MAP_SCALE),
+    });
+    return {
+      hiders: spawn.hiders.map(point),
+      seeker: point(spawn.seeker),
+      seeker2: spawn.seeker2 ? point(spawn.seeker2) : undefined,
+    };
+  }
 
   const MAPS = [
     {
@@ -387,17 +499,47 @@
       doors: GATE_DOORS,
     },
     {
-      name: "FIELD",
-      w: 2600,
-      h: 1560,
-      walls: FIELD_WALLS,
-      hides: FIELD_HIDES,
-      spawn: FIELD_SPAWN,
+      name: "GRASSLANDS",
+      w: 2200,
+      h: 1320,
+      walls: GRASSLANDS_WALLS,
+      hides: GRASSLANDS_HIDES,
+      spawn: GRASSLANDS_SPAWN,
+      lamps: [{ x: 1100, y: 660, radius: 180 }],
+      doors: [],
+      tallGrass: GRASSLANDS_GRASS,
+      field: true,
+    },
+    {
+      name: "SNOW",
+      w: Math.round(2600 * TAG_MAP_SCALE),
+      h: Math.round(1560 * TAG_MAP_SCALE),
+      walls: scaleTagRects(FIELD_WALLS),
+      hides: scaleTagRects(FIELD_HIDES),
+      spawn: scaleTagSpawn(FIELD_SPAWN),
       lamps: [],
       doors: [],
-      mud: FIELD_MUD,
-      tallGrass: FIELD_TALL_GRASS,
+      snowPiles: scaleTagRects(SNOW_PILES_BASE),
+      tallGrass: scaleTagRects(FIELD_TALL_GRASS),
       field: true,
+      snow: true,
+      tagMap: true,
+      tagOnly: true,
+    },
+    {
+      name: "GRASSLANDS",
+      w: Math.round(2200 * TAG_MAP_SCALE),
+      h: Math.round(1320 * TAG_MAP_SCALE),
+      walls: scaleTagRects(GRASSLANDS_WALLS),
+      hides: scaleTagRects(
+        GRASSLANDS_HIDES.filter((h) => h.type !== "building")
+      ),
+      spawn: scaleTagSpawn(GRASSLANDS_SPAWN),
+      lamps: [],
+      doors: [],
+      tallGrass: scaleTagRects(GRASSLANDS_GRASS),
+      field: true,
+      tagMap: true,
       tagOnly: true,
     },
   ];
@@ -407,13 +549,26 @@
     });
   }
 
-  const FIELD_INDEX = MAPS.findIndex((map) => map.tagOnly);
+  const TAG_MAP_INDEX = MAPS.findIndex((map) => map.tagOnly);
+  const NORMAL_MAP_INDICES = MAPS.map((map, index) =>
+    map.tagOnly ? -1 : index
+  ).filter((index) => index >= 0);
+  const TAG_MAP_INDICES = MAPS.map((map, index) =>
+    map.tagMap ? index : -1
+  ).filter((index) => index >= 0);
+
+  function normalMapForTagMap(index) {
+    const name = MAPS[index] ? MAPS[index].name : "";
+    const match = NORMAL_MAP_INDICES.find((i) => MAPS[i].name === name);
+    return match !== undefined ? match : NORMAL_MAP_INDICES[0];
+  }
 
   let mapIndex = 0;
   let LAMPS = MAPS[0].lamps;
   let DOORS = MAPS[0].doors;
-  let MUD = MAPS[0].mud || [];
+  let SNOW_PILES = MAPS[0].snowPiles || [];
   let TALL_GRASS = MAPS[0].tallGrass || [];
+  let SNOW_MAP = !!MAPS[0].snow;
   let CONCEAL_SPOTS = MAPS[0].hides;
 
   const MENU = {
@@ -443,6 +598,12 @@
     map: { x: 500, y: 476, w: 200, h: 34 },
     leave: { x: 300, y: 608, w: 400, h: 40 },
     copy: { x: 610, y: 200, w: 120, h: 34 },
+    local1: { x: 350, y: 404, w: 80, h: 32 },
+    local2: { x: 440, y: 404, w: 80, h: 32 },
+    local3: { x: 530, y: 404, w: 80, h: 32 },
+    joinLocal1: { x: 300, y: 430, w: 90, h: 32 },
+    joinLocal2: { x: 400, y: 430, w: 90, h: 32 },
+    joinLocal3: { x: 500, y: 430, w: 90, h: 32 },
   };
 
   const DEFAULT_CONTROLS = {
@@ -734,9 +895,9 @@
     });
   }
 
-  function drawBushStatic(g, b, blobs) {
+  function drawBushStatic(g, b, blobs, winter) {
     g.save();
-    g.fillStyle = "rgba(0, 0, 0, 0.32)";
+    g.fillStyle = winter ? "rgba(48, 74, 94, 0.24)" : "rgba(0, 0, 0, 0.32)";
     g.beginPath();
     g.ellipse(
       b.x + b.w / 2,
@@ -751,9 +912,17 @@
 
     for (const blob of blobs) {
       let color;
-      if (blob.tone < 0.45) color = "#0f2a1b";
-      else if (blob.tone < 0.8) color = "#173a25";
-      else color = "#205033";
+      if (winter) {
+        if (blob.tone < 0.45) color = "#2f4654";
+        else if (blob.tone < 0.82) color = "#547184";
+        else color = "#e8f4fb";
+      } else if (blob.tone < 0.45) {
+        color = "#0f2a1b";
+      } else if (blob.tone < 0.8) {
+        color = "#173a25";
+      } else {
+        color = "#205033";
+      }
       g.fillStyle = color;
       g.beginPath();
       g.arc(b.x + blob.x, b.y + blob.y, blob.r, 0, TAU);
@@ -761,8 +930,10 @@
     }
 
     for (const blob of blobs) {
-      if (blob.tone < 0.68) continue;
-      g.fillStyle = "rgba(88, 168, 112, 0.35)";
+      if (blob.tone < (winter ? 0.7 : 0.68)) continue;
+      g.fillStyle = winter
+        ? "rgba(255, 255, 255, 0.62)"
+        : "rgba(88, 168, 112, 0.35)";
       g.beginPath();
       g.arc(
         b.x + blob.x - 3,
@@ -944,21 +1115,33 @@
     g.restore();
   }
 
-  function drawWallStatic(g, w) {
+  function drawWallStatic(g, w, winter) {
     g.save();
-    g.shadowColor = "rgba(0, 0, 0, 0.45)";
+    g.shadowColor = winter ? "rgba(50, 80, 100, 0.35)" : "rgba(0, 0, 0, 0.45)";
     g.shadowBlur = 10;
     g.shadowOffsetY = 4;
     const grad = g.createLinearGradient(0, w.y, 0, w.y + w.h);
-    grad.addColorStop(0, "#4a4a4a");
-    grad.addColorStop(1, "#222222");
+    if (winter) {
+      grad.addColorStop(0, "#9db1bf");
+      grad.addColorStop(1, "#63798a");
+    } else {
+      grad.addColorStop(0, "#4a4a4a");
+      grad.addColorStop(1, "#222222");
+    }
     roundRectPath(w.x, w.y, w.w, w.h, 5, g);
     g.fillStyle = grad;
     g.fill();
     g.restore();
 
-    g.fillStyle = "rgba(255, 255, 255, 0.09)";
-    g.fillRect(w.x + 3, w.y + 2, w.w - 6, 2);
+    if (winter) {
+      g.fillStyle = "rgba(255, 255, 255, 0.72)";
+      g.fillRect(w.x + 3, w.y + 1, w.w - 6, 3);
+      g.fillStyle = "rgba(255, 255, 255, 0.18)";
+      g.fillRect(w.x + 3, w.y + 4, w.w - 6, 1);
+    } else {
+      g.fillStyle = "rgba(255, 255, 255, 0.09)";
+      g.fillRect(w.x + 3, w.y + 2, w.w - 6, 2);
+    }
   }
 
   function drawLampStatic(g, lamp) {
@@ -1054,49 +1237,114 @@
     g.strokeRect(M + 0.5, M + 0.5, worldW - M * 2 - 1, worldH - M * 2 - 1);
   }
 
-  function drawMudStatic(g, mud) {
-    for (let i = 0; i < mud.length; i++) {
-      const p = mud[i];
+  function drawSnowPileStatic(g, piles) {
+    for (let i = 0; i < piles.length; i++) {
+      const p = piles[i];
       const r = seeded(7000 + i * 71);
       g.save();
-      g.fillStyle = "rgba(70, 52, 32, 0.92)";
+      g.fillStyle = "rgba(64, 92, 112, 0.16)";
+      g.beginPath();
+      g.ellipse(p.x + 6, p.y + 8, p.rx * 1.02, p.ry * 0.9, 0, 0, TAU);
+      g.fill();
+
+      g.fillStyle = "rgba(232, 246, 252, 0.96)";
       g.beginPath();
       g.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, TAU);
       g.fill();
-      g.fillStyle = "rgba(92, 68, 42, 0.75)";
+      g.fillStyle = "rgba(255, 255, 255, 0.9)";
       g.beginPath();
-      g.ellipse(p.x - 6, p.y - 6, p.rx * 0.78, p.ry * 0.72, 0, 0, TAU);
+      g.ellipse(p.x - 6, p.y - 8, p.rx * 0.76, p.ry * 0.64, 0, 0, TAU);
       g.fill();
-      g.strokeStyle = "rgba(38, 28, 16, 0.65)";
+      g.strokeStyle = "rgba(150, 190, 210, 0.55)";
       g.lineWidth = 3;
       g.beginPath();
       g.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, TAU);
       g.stroke();
-      for (let k = 0; k < 7; k++) {
+
+      for (let k = 0; k < 12; k++) {
         const a = r() * TAU;
-        const d = r() * 0.8;
+        const d = r() * 0.82;
         const bx = p.x + Math.cos(a) * p.rx * d;
         const by = p.y + Math.sin(a) * p.ry * d;
-        g.fillStyle = "rgba(140, 170, 120, 0.28)";
+        g.fillStyle =
+          k % 3 === 0 ? "rgba(255, 255, 255, 0.9)" : "rgba(180, 214, 232, 0.6)";
         g.beginPath();
-        g.arc(bx, by, 2 + r() * 4, 0, TAU);
+        g.arc(bx, by, 1.6 + r() * 3.2, 0, TAU);
         g.fill();
       }
-      g.strokeStyle = "rgba(190, 210, 160, 0.22)";
+      g.strokeStyle = "rgba(120, 160, 182, 0.35)";
       g.lineWidth = 2;
       g.beginPath();
       g.ellipse(
-        p.x - p.rx * 0.2,
-        p.y - p.ry * 0.25,
+        p.x + p.rx * 0.18,
+        p.y + p.ry * 0.22,
         p.rx * 0.5,
         p.ry * 0.32,
-        0.4,
-        Math.PI * 1.05,
-        Math.PI * 1.75
+        -0.35,
+        Math.PI * 0.05,
+        Math.PI * 0.62
       );
       g.stroke();
       g.restore();
     }
+  }
+
+  function drawSnowGround(g, worldW, worldH) {
+    const grad = g.createLinearGradient(0, 0, 0, worldH);
+    grad.addColorStop(0, "#e9f3f9");
+    grad.addColorStop(0.52, "#d6e7f1");
+    grad.addColorStop(1, "#c0d6e4");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, worldW, worldH);
+
+    g.save();
+    g.globalAlpha = 0.12;
+    g.strokeStyle = "#ffffff";
+    g.lineWidth = 28;
+    for (let x = -worldH; x < worldW; x += 340) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + worldH, worldH);
+      g.stroke();
+    }
+    g.restore();
+
+    const r = seeded(20261110);
+    for (let i = 0; i < 1800; i++) {
+      const x = r() * worldW;
+      const y = r() * worldH;
+      if (r() < 0.55) {
+        g.fillStyle = "rgba(255, 255, 255, 0.38)";
+        g.beginPath();
+        g.arc(x, y, 0.8 + r() * 1.7, 0, TAU);
+        g.fill();
+      } else {
+        g.fillStyle = "rgba(110, 155, 185, 0.1)";
+        g.beginPath();
+        g.arc(x, y, 2 + r() * 5, 0, TAU);
+        g.fill();
+      }
+    }
+
+    g.save();
+    g.globalAlpha = 0.1;
+    g.fillStyle = "#9fd4ec";
+    for (let i = 0; i < 12; i++) {
+      const x = r() * worldW;
+      const y = r() * worldH;
+      const rad = 120 + r() * 260;
+      g.beginPath();
+      g.ellipse(x, y, rad, rad * 0.6, r() * TAU, 0, TAU);
+      g.fill();
+    }
+    g.restore();
+
+    g.strokeStyle = "#5b7689";
+    g.lineWidth = M;
+    g.strokeRect(M / 2, M / 2, worldW - M, worldH - M);
+    g.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    g.lineWidth = 1;
+    g.strokeRect(M + 0.5, M + 0.5, worldW - M * 2 - 1, worldH - M * 2 - 1);
   }
 
   const TALL_GRASS_STYLES = [
@@ -1144,14 +1392,60 @@
     },
   ];
 
-  function tallGrassStyle(patch) {
-    return TALL_GRASS_STYLES[(patch.variant || 0) % TALL_GRASS_STYLES.length];
+  const WINTER_GRASS_STYLES = [
+    {
+      fill: "rgba(190, 214, 228, 0.5)",
+      edge: "rgba(150, 180, 198, 0.35)",
+      bladeA: "rgba(248, 253, 255, 0.72)",
+      bladeB: "rgba(150, 184, 204, 0.65)",
+      count: 95,
+      hMin: 5,
+      hMax: 16,
+      fgCount: 100,
+      fgHMin: 7,
+      fgHMax: 17,
+      sway: 2.2,
+      amp: 3,
+    },
+    {
+      fill: "rgba(166, 198, 214, 0.5)",
+      edge: "rgba(120, 158, 180, 0.35)",
+      bladeA: "rgba(232, 247, 255, 0.72)",
+      bladeB: "rgba(120, 168, 192, 0.68)",
+      count: 115,
+      hMin: 6,
+      hMax: 18,
+      fgCount: 120,
+      fgHMin: 8,
+      fgHMax: 21,
+      sway: 1.7,
+      amp: 2.4,
+    },
+    {
+      fill: "rgba(205, 226, 238, 0.52)",
+      edge: "rgba(160, 190, 208, 0.35)",
+      bladeA: "rgba(255, 255, 255, 0.75)",
+      bladeB: "rgba(180, 205, 220, 0.7)",
+      count: 70,
+      hMin: 4,
+      hMax: 13,
+      fgCount: 80,
+      fgHMin: 6,
+      fgHMax: 15,
+      sway: 2.8,
+      amp: 3.6,
+    },
+  ];
+
+  function tallGrassStyle(patch, winter) {
+    const styles = winter ? WINTER_GRASS_STYLES : TALL_GRASS_STYLES;
+    return styles[(patch.variant || 0) % styles.length];
   }
 
-  function drawTallGrassStatic(g, grass) {
+  function drawTallGrassStatic(g, grass, winter) {
     for (let i = 0; i < grass.length; i++) {
       const p = grass[i];
-      const style = tallGrassStyle(p);
+      const style = tallGrassStyle(p, winter);
       const r = seeded(9000 + i * 103);
       g.save();
       g.fillStyle = style.fill;
@@ -1179,7 +1473,7 @@
     ctx.save();
     for (let i = 0; i < TALL_GRASS.length; i++) {
       const p = TALL_GRASS[i];
-      const style = tallGrassStyle(p);
+      const style = tallGrassStyle(p, SNOW_MAP);
       const r = seeded(9000 + i * 103);
       for (let k = 0; k < style.fgCount; k++) {
         const x = p.x + r() * p.w;
@@ -1216,15 +1510,16 @@
     g.imageSmoothingEnabled = true;
 
     if (map.field) {
-      drawFieldGround(g, worldW, worldH);
-      drawMudStatic(g, map.mud || []);
-      drawTallGrassStatic(g, map.tallGrass || []);
+      if (map.snow) drawSnowGround(g, worldW, worldH);
+      else drawFieldGround(g, worldW, worldH);
+      drawSnowPileStatic(g, map.snowPiles || []);
+      drawTallGrassStatic(g, map.tallGrass || [], !!map.snow);
       for (let i = 0; i < hides.length; i++) {
         const spot = hides[i];
         if (spot.type === "building") drawBuildingStatic(g, spot, i);
-        else drawBushStatic(g, spot, art[i]);
+        else drawBushStatic(g, spot, art[i], !!map.snow);
       }
-      for (const wall of walls) drawWallStatic(g, wall);
+      for (const wall of walls) drawWallStatic(g, wall, !!map.snow);
     } else if (POTATO) {
       g.fillStyle = "#46503e";
       g.fillRect(0, 0, worldW, worldH);
@@ -1515,6 +1810,18 @@
       "#a32b2b",
       "rgba(255, 107, 107, 0.18)"
     ),
+    p5: makeBallSprite(
+      "#e9d5ff",
+      "#c084fc",
+      "#6b21a8",
+      "rgba(192, 132, 252, 0.18)"
+    ),
+    p6: makeBallSprite(
+      "#fed7aa",
+      "#fb923c",
+      "#9a3412",
+      "rgba(251, 146, 60, 0.18)"
+    ),
   };
 
   // ---------------------------------------------------------------------------
@@ -1623,6 +1930,10 @@
       tone(240, 0.03, "square", 0.022);
       tone(90, 0.05, "square", 0.018, 0.025);
     },
+    snowball() {
+      tone(900, 0.06, "triangle", 0.03, 0, 520);
+      tone(420, 0.12, "sine", 0.028, 0.04);
+    },
   };
 
   // ---------------------------------------------------------------------------
@@ -1676,6 +1987,10 @@
     joinCode: "",
     mySlot: -1,
     myGroup: null,
+    mySlots: [],
+    myGroups: [],
+    mySeats: [],
+    localCount: 1,
     hostConn: null,
     inMatch: false,
     ready: false,
@@ -1689,6 +2004,14 @@
     lastInputSent: 0,
     lastSent: { u: false, d: false, l: false, r: false, sprint: false },
     hostLost: false,
+    clientId: loadClientId(),
+    reconnecting: false,
+    reconnectTries: 0,
+    reconnectTimer: null,
+    joinTimer: null,
+    graceTimers: {},
+    leaving: false,
+    session: 0,
   };
   let onlineInputs = {};
 
@@ -1757,6 +2080,35 @@
     }
   }
 
+  function loadClientId() {
+    let storage = null;
+    try {
+      if (window.sessionStorage) storage = window.sessionStorage;
+    } catch (e) {
+      /* ignore */
+    }
+    if (!storage) {
+      try {
+        storage = localStorage;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    try {
+      let id = storage ? storage.getItem("hide-and-seek-client-id") : null;
+      if (!id) {
+        id =
+          "c-" +
+          Math.random().toString(36).slice(2, 10) +
+          Math.random().toString(36).slice(2, 6);
+        if (storage) storage.setItem("hide-and-seek-client-id", id);
+      }
+      return id;
+    } catch (e) {
+      return "c-" + Math.random().toString(36).slice(2, 12);
+    }
+  }
+
   function loadTagMode() {
     try {
       return localStorage.getItem("hide-and-seek-tag") === "1";
@@ -1785,8 +2137,14 @@
     return online.role === "client";
   }
 
-  function onlineLocalInput() {
-    const bind = controls.h1;
+  function onlineLocalBindForSeat(seat) {
+    if (seat === 1) return controls.h2;
+    if (seat >= 2) return controls.seeker;
+    return controls.h1;
+  }
+
+  function onlineLocalInputForSeat(seat) {
+    const bind = onlineLocalBindForSeat(seat);
     return {
       u: pressed.has(bind.up),
       d: pressed.has(bind.down),
@@ -1794,6 +2152,10 @@
       r: pressed.has(bind.right),
       sprint: pressed.has(bind.sprint),
     };
+  }
+
+  function onlineLocalInput() {
+    return onlineLocalInputForSeat(0);
   }
 
   function onlineDirFor(group) {
@@ -1819,8 +2181,8 @@
   }
 
   function onlineSeekerWalk() {
-    const base = tagMode ? CFG.tag.hiderWalk : CFG.hider.walk;
-    return base * 1.1;
+    if (tagMode) return CFG.tag.hiderWalk;
+    return CFG.hider.walk * 1.1;
   }
 
   function defaultControls() {
@@ -1857,8 +2219,13 @@
   }
 
   function rules() {
-    if (tagMode) return mode === 4 ? TAG_RULES_4 : TAG_RULES;
-    return twoSeekerMode() && mode === 3 ? RULES.twoSeekers : RULES[mode];
+    if (tagMode) {
+      if (mode >= 5) return TAG_RULES_LARGE;
+      return mode === 4 ? TAG_RULES_4 : TAG_RULES;
+    }
+    if (twoSeekerMode() && mode === 3) return RULES.twoSeekers;
+    if (online.inMatch && ONLINE_RULES[mode]) return ONLINE_RULES[mode];
+    return RULES[mode];
   }
 
   function aliveHiders() {
@@ -1994,14 +2361,52 @@
       revealT: 0,
       tagSlowT: 0,
       tagBoostT: 0,
+      snowT: 0,
+      snowballCD: 0,
+      snowballSlowT: 0,
+      snowballWindT: 0,
+      markedT: 0,
+      markedColor: null,
+      markedBy: null,
       alive: true,
       id: id === undefined ? 0 : id,
       color: PLAYER_COLORS[group] || RED,
     };
   }
 
+  function onlineHiderSpawn(index) {
+    if (SPAWN.hiders[index]) return SPAWN.hiders[index];
+    const base = SPAWN.hiders[index % SPAWN.hiders.length];
+    for (let ring = 1; ring <= 8; ring++) {
+      for (let k = 0; k < 10; k++) {
+        const angle = (k / 10) * TAU + ring * 0.7;
+        const x = clamp(
+          base.x + Math.cos(angle) * 50 * ring,
+          M + R,
+          W - M - R
+        );
+        const y = clamp(
+          base.y + Math.sin(angle) * 50 * ring,
+          M + R,
+          H - M - R
+        );
+        if (!aiPointBlocked(x, y)) return { x, y };
+      }
+    }
+    return { x: base.x, y: base.y };
+  }
+
   function resetEntities() {
-    if (mode === 4) {
+    if (online.inMatch && online.players.length >= 2) {
+      seeker2 = null;
+      const hiderGroups = hiderGroupsForRound(roundNum);
+      const seekerGroup = seekerGroupForRound(roundNum);
+      hiders = hiderGroups.map((group, index) =>
+        makeEntity(onlineHiderSpawn(index), index, group)
+      );
+      seeker = makeEntity(SPAWN.seeker, -1, seekerGroup);
+      seeker.pingCD = 0;
+    } else if (mode === 4) {
       seeker2 = null;
       const hiderGroups = hiderGroupsForRound(roundNum);
       const seekerGroup = seekerGroupForRound(roundNum);
@@ -2049,7 +2454,7 @@
     if (m === 2 && tagMode) {
       tagMode = false;
       saveTagMode();
-      if (MAPS[mapIndex].tagOnly) applyMap(0);
+      if (MAPS[mapIndex].tagOnly) applyMap(normalMapForTagMap(mapIndex));
     }
     if (mode === m && twoSeekers === duo) return;
     mode = m;
@@ -2090,9 +2495,9 @@
       hardMode = false;
       saveHardMode();
       roundAssignments.clear();
-      applyMap(FIELD_INDEX);
+      if (!MAPS[mapIndex].tagMap) applyMap(TAG_MAP_INDEX);
     } else if (MAPS[mapIndex].tagOnly) {
-      applyMap(0);
+      applyMap(normalMapForTagMap(mapIndex));
     }
     refreshConcealSpots();
     if (phase === PHASE.READY || menuOpen) resetEntities();
@@ -2117,20 +2522,20 @@
     SPAWN = map.spawn;
     LAMPS = map.lamps || [];
     DOORS = map.doors || [];
-    MUD = map.mud || [];
+    SNOW_PILES = map.snowPiles || [];
     TALL_GRASS = map.tallGrass || [];
+    SNOW_MAP = !!map.snow;
     refreshConcealSpots();
     staticArena = mapArenas[index];
     spikeArena = spikeArenas[index];
   }
 
   function setMap(index) {
-    if (tagMode) return;
     if ((phase !== PHASE.READY && !menuOpen) || menuScreen !== "main") return;
-    let next = ((index % MAPS.length) + MAPS.length) % MAPS.length;
-    for (let i = 0; i < MAPS.length && MAPS[next].tagOnly; i++) {
-      next = (next + 1) % MAPS.length;
-    }
+    const list = tagMode ? TAG_MAP_INDICES : NORMAL_MAP_INDICES;
+    if (!list.length) return;
+    const pos = list.indexOf(mapIndex);
+    const next = list[(pos + 1) % list.length];
     applyMap(next);
     resetEntities();
     sfx.click();
@@ -2235,6 +2640,7 @@
     hider.stunT = CFG.tag.transferStun;
     hider.tagBoostT = 0;
     hider.tagSlowT = 0;
+    hider.snowballWindT = 0;
     hider.flashlightOn = true;
     hider.pingCD = 0;
     hider.dashT = 0;
@@ -2266,6 +2672,44 @@
       }
     }
     return false;
+  }
+
+  function nearestSnowballTarget(ent) {
+    let best = null;
+    let bestD = CFG.tag.snowballRange;
+    for (const other of hiders.concat(activeSeekers())) {
+      if (other === ent || !other.alive) continue;
+      const d = dist(ent, other);
+      if (d < bestD) {
+        bestD = d;
+        best = other;
+      }
+    }
+    return best;
+  }
+
+  function tryStartSnowball(ent) {
+    if (!tagMode || !SNOW_MAP || phase !== PHASE.SEEK) return false;
+    if (!ent || !ent.alive) return false;
+    if (ent.snowballWindT > 0 || ent.snowballCD > 0) return false;
+    if (ent.stunT > 0 || ent.teleportT > 0) return false;
+    if (!nearestSnowballTarget(ent)) return false;
+    ent.snowballWindT = CFG.tag.snowballWind;
+    ent.snowballCD = CFG.tag.snowballCooldown;
+    sfx.lightSwitch();
+    return true;
+  }
+
+  function throwSnowball(ent) {
+    const target = nearestSnowballTarget(ent);
+    if (!target) return;
+    target.snowballSlowT = CFG.tag.snowballSlowTime;
+    target.markedT = CFG.tag.snowballMarkTime;
+    target.markedColor = ent.color;
+    target.markedBy = ent.ctrl;
+    spawnSnowball(ent, target);
+    snowBurst(target.x, target.y, ent.color, 14);
+    sfx.snowball();
   }
 
   function endRound(who, reason) {
@@ -2326,12 +2770,19 @@
       .slice(0, ONLINE_CODE_LEN);
   }
 
+  function onlineIdleInput() {
+    return { u: false, d: false, l: false, r: false, sprint: false };
+  }
+
   function onlinePlainPlayers() {
     return online.players.map((p) => ({
       slot: p.slot,
       group: p.group,
       name: p.name,
       host: !!p.host,
+      hostLocal: !!p.hostLocal,
+      localSeat: p.localSeat || 0,
+      connected: p.connected !== false,
     }));
   }
 
@@ -2366,33 +2817,72 @@
       player.group = ONLINE_GROUPS[index];
       player.name = "P" + (index + 1);
     });
+    const byConn = new Map();
     for (const player of online.players) {
-      if (player.conn) {
-        onlineSend(player.conn, {
-          t: "you",
-          slot: player.slot,
-          group: player.group,
-        });
+      if (!player.conn) continue;
+      let seats = byConn.get(player.conn);
+      if (!seats) {
+        seats = [];
+        byConn.set(player.conn, seats);
       }
+      seats.push({
+        slot: player.slot,
+        group: player.group,
+        localSeat: player.localSeat || 0,
+      });
+    }
+    for (const [conn, seats] of byConn) {
+      seats.sort((a, b) => a.localSeat - b.localSeat);
+      onlineSend(conn, { t: "you", seats });
+    }
+    if (onlineIsHost()) {
+      const seats = online.players.filter((p) => p.hostLocal);
+      online.mySlots = seats.map((p) => p.slot);
+      online.myGroups = seats.map((p) => p.group);
+      online.mySeats = seats.map((p) => ({
+        slot: p.slot,
+        group: p.group,
+        localSeat: p.localSeat || 0,
+      }));
     }
   }
 
+  function onlineViewerGroups() {
+    if (!online.inMatch) return [];
+    if (onlineIsHost()) {
+      return online.players.filter((p) => p.hostLocal).map((p) => p.group);
+    }
+    if (online.myGroups && online.myGroups.length) {
+      return online.myGroups.slice();
+    }
+    return online.myGroup ? [online.myGroup] : [];
+  }
+
   function onlineLocalGroup() {
-    return onlineIsHost() ? "h1" : online.myGroup;
+    const groups = onlineViewerGroups();
+    return groups[0] || (onlineIsHost() ? "h1" : online.myGroup);
   }
 
   function onlineViewerGroup() {
     return onlineLocalGroup();
   }
 
+  function onlineViewerSeekers() {
+    const groups = onlineViewerGroups();
+    return activeSeekers().filter((ent) => groups.includes(ent.ctrl));
+  }
+
+  function onlineViewerHiders() {
+    const groups = onlineViewerGroups();
+    return hiders.filter((ent) => groups.includes(ent.ctrl));
+  }
+
   function onlineViewerSeeker() {
-    const group = onlineViewerGroup();
-    return activeSeekers().find((ent) => ent.ctrl === group) || null;
+    return onlineViewerSeekers()[0] || null;
   }
 
   function onlineViewerHider() {
-    const group = onlineViewerGroup();
-    return hiders.find((ent) => ent.ctrl === group) || null;
+    return onlineViewerHiders()[0] || null;
   }
 
   function onlineRememberLocalState() {
@@ -2417,7 +2907,7 @@
     tagMode = prev.tagMode;
     roundAssignments.clear();
     if (tagMode) {
-      applyMap(FIELD_INDEX);
+      applyMap(TAG_MAP_INDEX);
     } else {
       applyMap(MAPS[prev.mapIndex] && !MAPS[prev.mapIndex].tagOnly ? prev.mapIndex : 0);
     }
@@ -2426,6 +2916,32 @@
   }
 
   function onlineResetSession(keepPrev) {
+    online.session += 1;
+    online.role = null;
+    if (online.reconnectTimer) {
+      try {
+        window.clearTimeout(online.reconnectTimer);
+      } catch (e) {
+        /* ignore */
+      }
+      online.reconnectTimer = null;
+    }
+    if (online.joinTimer) {
+      try {
+        window.clearTimeout(online.joinTimer);
+      } catch (e) {
+        /* ignore */
+      }
+      online.joinTimer = null;
+    }
+    for (const key of Object.keys(online.graceTimers)) {
+      try {
+        window.clearTimeout(online.graceTimers[key]);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    online.graceTimers = {};
     try {
       if (online.peer) online.peer.destroy();
     } catch (e) {
@@ -2445,7 +2961,6 @@
         /* ignore */
       }
     }
-    online.role = null;
     online.peer = null;
     online.conns = [];
     online.players = [];
@@ -2453,6 +2968,9 @@
     online.joinCode = "";
     online.mySlot = -1;
     online.myGroup = null;
+    online.mySlots = [];
+    online.myGroups = [];
+    online.mySeats = [];
     online.hostConn = null;
     online.inMatch = false;
     online.ready = false;
@@ -2465,11 +2983,21 @@
     online.lastStateSent = 0;
     online.lastInputSent = 0;
     online.hostLost = false;
+    online.reconnecting = false;
+    online.reconnectTries = 0;
+    online.leaving = false;
     onlineInputs = {};
     if (!keepPrev) online.prev = null;
   }
 
   function onlineLeaveSession() {
+    online.leaving = true;
+    if (onlineIsClient() && online.hostConn) {
+      onlineSend(online.hostConn, { t: "leave" });
+    }
+    if (onlineIsHost()) {
+      onlineBroadcast({ t: "closed" });
+    }
     onlineResetSession(true);
     phase = PHASE.READY;
     menuScreen = "main";
@@ -2522,27 +3050,55 @@
   }
 
   function onlineCreateLobby() {
+    if (online.connecting) return;
     if (!onlineSupported()) {
       online.error = "Online libraries failed to load. Check your connection.";
       return;
     }
     onlineRememberLocalState();
     onlineResetSession(true);
+    const session = online.session;
     online.role = "host";
     online.connecting = true;
     online.screen = "lobby";
+    const hostSeats = clamp(
+      Number(online.localCount) || 1,
+      1,
+      ONLINE_LOCAL_MAX
+    );
+    online.localCount = hostSeats;
+    online.players = [];
+    for (let i = 0; i < hostSeats; i++) {
+      online.players.push({
+        slot: i,
+        group: ONLINE_GROUPS[i],
+        name: "P" + (i + 1),
+        host: i === 0,
+        hostLocal: true,
+        connected: true,
+        clientId: online.clientId,
+        localSeat: i,
+        conn: null,
+      });
+    }
+    online.mySlots = online.players.map((p) => p.slot);
+    online.myGroups = online.players.map((p) => p.group);
+    online.mySeats = online.players.map((p) => ({
+      slot: p.slot,
+      group: p.group,
+      localSeat: p.localSeat,
+    }));
     online.mySlot = 0;
-    online.myGroup = "h1";
-    online.players = [
-      { slot: 0, group: "h1", name: "P1", host: true, conn: null },
-    ];
+    online.myGroup = online.myGroups[0] || "h1";
     online.config = { tag: false, map: MAPS[mapIndex].tagOnly ? 0 : mapIndex };
-    onlineInputs = { h1: { u: false, d: false, l: false, r: false, sprint: false } };
+    onlineInputs = {};
+    for (const p of online.players) onlineInputs[p.group] = onlineIdleInput();
     menuScreen = "lobby";
     phase = PHASE.READY;
     pressed.clear();
 
     const attempt = (tries) => {
+      if (session !== online.session || online.role !== "host") return;
       const code = onlineGenerateCode();
       let peer;
       try {
@@ -2554,6 +3110,8 @@
       }
       online.peer = peer;
       peer.on("open", () => {
+        if (peer !== online.peer) return;
+        if (session !== online.session || online.role !== "host") return;
         online.connecting = false;
         online.ready = true;
         online.code = code;
@@ -2563,20 +3121,36 @@
         onlineBroadcastLobby();
       });
       peer.on("error", (err) => {
+        if (peer !== online.peer) return;
+        if (session !== online.session || online.role !== "host") return;
         const type = err && err.type ? err.type : "";
-        if ((type === "unavailable-id" || type === "network") && tries < 4) {
+        if (online.ready && online.code) {
+          online.connecting = false;
+          online.error =
+            "Lobby service interrupted. Existing players can keep playing; reconnecting...";
+          try {
+            peer.reconnect();
+          } catch (e) {
+            /* ignore */
+          }
+          return;
+        }
+        if ((type === "unavailable-id" || type === "network") && tries < 5) {
           try {
             peer.destroy();
           } catch (e) {
             /* ignore */
           }
-          window.setTimeout(() => attempt(tries + 1), 350);
+          const delay = 400 + tries * 700;
+          window.setTimeout(() => attempt(tries + 1), delay);
           return;
         }
         online.connecting = false;
         online.error = "Lobby error: " + (type || "connection failed");
       });
       peer.on("disconnected", () => {
+        if (peer !== online.peer) return;
+        if (session !== online.session || online.role !== "host") return;
         try {
           peer.reconnect();
         } catch (e) {
@@ -2584,41 +3158,19 @@
         }
       });
       peer.on("connection", (conn) => {
-        conn.on("open", () => {
-          if (online.players.length >= ONLINE_MAX) {
-            onlineSend(conn, { t: "full" });
-            window.setTimeout(() => {
-              try {
-                conn.close();
-              } catch (e) {
-                /* ignore */
-              }
-            }, 150);
-            return;
-          }
-          const slot = online.players.length;
-          const player = {
-            slot,
-            group: ONLINE_GROUPS[slot],
-            name: "P" + (slot + 1),
-            host: false,
-            conn,
-          };
-          online.players.push(player);
-          online.conns.push(conn);
-          conn.on("data", (data) => onlineHandleHostData(conn, data));
-          conn.on("close", () => onlineHandleHostDisconnect(conn));
-          conn.on("error", () => onlineHandleHostDisconnect(conn));
-          onlineSend(conn, {
-            t: "welcome",
-            code: online.code,
-            slot,
-            group: player.group,
-            config: online.config,
-            players: onlinePlainPlayers(),
-          });
-          onlineReassignSlots();
-          onlineBroadcastLobby();
+        if (peer !== online.peer) return;
+        if (session !== online.session || online.role !== "host") return;
+        conn.on("data", (data) => {
+          if (session !== online.session || online.role !== "host") return;
+          onlineHandleHostData(conn, data);
+        });
+        conn.on("close", () => {
+          if (session !== online.session || online.role !== "host") return;
+          onlineHandleHostDisconnect(conn);
+        });
+        conn.on("error", () => {
+          if (session !== online.session || online.role !== "host") return;
+          onlineHandleHostDisconnect(conn);
         });
       });
     };
@@ -2626,6 +3178,7 @@
   }
 
   function onlineJoinLobby() {
+    if (online.connecting) return;
     if (!onlineSupported()) {
       online.error = "Online libraries failed to load. Check your connection.";
       return;
@@ -2637,12 +3190,20 @@
     }
     onlineRememberLocalState();
     onlineResetSession(true);
+    const session = online.session;
+    online.localCount = clamp(
+      Number(online.localCount) || 1,
+      1,
+      ONLINE_LOCAL_MAX
+    );
     online.role = "client";
     online.connecting = true;
     online.code = code;
     online.screen = "join";
     menuScreen = "join";
     online.error = "";
+    online.mySlot = -1;
+    online.myGroup = null;
     pressed.clear();
 
     let peer;
@@ -2654,23 +3215,177 @@
       return;
     }
     online.peer = peer;
+    if (online.joinTimer) {
+      try {
+        window.clearTimeout(online.joinTimer);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    online.joinTimer = window.setTimeout(() => {
+      if (session !== online.session || online.role !== "client") return;
+      if (online.mySlot < 0 && online.connecting) {
+        online.connecting = false;
+        online.error = "The lobby did not answer. Check the code and try again.";
+        try {
+          peer.destroy();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }, 9000);
+
     peer.on("open", () => {
+      if (peer !== online.peer) return;
+      if (session !== online.session || online.role !== "client") return;
       const conn = peer.connect("hsk-" + code, { reliable: true });
       online.hostConn = conn;
       conn.on("open", () => {
-        online.connecting = false;
+        if (session !== online.session || online.role !== "client") return;
+        onlineSend(conn, {
+          t: "join",
+          clientId: online.clientId,
+          localCount: online.localCount,
+        });
       });
-      conn.on("data", (data) => onlineHandleClientData(data));
+      conn.on("data", (data) => {
+        if (session !== online.session || online.role !== "client") return;
+        onlineHandleClientData(data);
+      });
       conn.on("close", () => {
-        if (online.role === "client") onlineHostLost("Host closed the lobby.");
+        if (session !== online.session || online.role !== "client") return;
+        onlineClientConnectionLost();
       });
       conn.on("error", () => {
-        if (online.role === "client") onlineHostLost("Could not reach the lobby.");
+        if (session !== online.session || online.role !== "client") return;
+        onlineClientConnectionLost();
       });
     });
     peer.on("error", (err) => {
+      if (peer !== online.peer) return;
+      if (session !== online.session || online.role !== "client") return;
       online.connecting = false;
-      online.error = "Join error: " + (err && err.type ? err.type : "connection failed");
+      online.error =
+        "Join error: " + (err && err.type ? err.type : "connection failed");
+    });
+  }
+
+  function onlineClientConnectionLost() {
+    if (online.role !== "client") return;
+    if (online.mySlot < 0) {
+      online.connecting = false;
+      online.error = "Could not reach the lobby. Check the code and try again.";
+      return;
+    }
+    onlineStartReconnect();
+  }
+
+  function onlineStartReconnect() {
+    if (online.role !== "client" || online.leaving || online.reconnecting) return;
+    if (online.mySlot < 0) return;
+    online.reconnecting = true;
+    online.reconnectTries = 0;
+    online.error = "";
+    online.connecting = false;
+    onlineReconnectAttempt();
+  }
+
+  function onlineScheduleReconnect() {
+    if (online.role !== "client" || !online.reconnecting) return;
+    if (online.reconnectTimer) return;
+    online.reconnectTimer = window.setTimeout(() => {
+      online.reconnectTimer = null;
+      onlineReconnectAttempt();
+    }, 1800);
+  }
+
+  function onlineReconnectAttempt() {
+    if (online.role !== "client" || !online.reconnecting) return;
+    online.reconnectTries += 1;
+    if (online.reconnectTries > 12) {
+      onlineHostLost("Could not reconnect to the host.");
+      return;
+    }
+    try {
+      if (online.peer) online.peer.destroy();
+    } catch (e) {
+      /* ignore */
+    }
+    if (online.hostConn) {
+      try {
+        online.hostConn.close();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    const session = online.session;
+    let peer;
+    try {
+      peer = new window.Peer({ debug: 0 });
+    } catch (e) {
+      onlineScheduleReconnect();
+      return;
+    }
+    online.peer = peer;
+    if (online.joinTimer) {
+      try {
+        window.clearTimeout(online.joinTimer);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    online.joinTimer = window.setTimeout(() => {
+      if (session !== online.session || online.role !== "client") return;
+      if (!online.reconnecting) return;
+      try {
+        peer.destroy();
+      } catch (e) {
+        /* ignore */
+      }
+      onlineScheduleReconnect();
+    }, 8000);
+    peer.on("open", () => {
+      if (peer !== online.peer) return;
+      if (session !== online.session || online.role !== "client") return;
+      const conn = peer.connect("hsk-" + online.code, { reliable: true });
+      online.hostConn = conn;
+      conn.on("open", () => {
+        if (session !== online.session || online.role !== "client") return;
+        onlineSend(conn, {
+          t: "join",
+          clientId: online.clientId,
+          localCount: online.localCount,
+        });
+      });
+      conn.on("data", (data) => {
+        if (session !== online.session || online.role !== "client") return;
+        onlineHandleClientData(data);
+      });
+      conn.on("close", () => {
+        if (session !== online.session || online.role !== "client") return;
+        if (!online.reconnecting) return;
+        online.hostConn = null;
+        onlineScheduleReconnect();
+      });
+      conn.on("error", () => {
+        if (session !== online.session || online.role !== "client") return;
+        online.hostConn = null;
+        onlineScheduleReconnect();
+      });
+    });
+    peer.on("error", () => {
+      if (peer !== online.peer) return;
+      if (session !== online.session || online.role !== "client") return;
+      onlineScheduleReconnect();
+    });
+    peer.on("disconnected", () => {
+      if (peer !== online.peer) return;
+      if (session !== online.session || online.role !== "client") return;
+      try {
+        peer.reconnect();
+      } catch (e) {
+        /* ignore */
+      }
     });
   }
 
@@ -2687,9 +3402,180 @@
     resetEntities();
   }
 
+  function onlineCancelGrace(player) {
+    const key = player.clientId || "slot-" + player.slot;
+    if (online.graceTimers[key]) {
+      try {
+        window.clearTimeout(online.graceTimers[key]);
+      } catch (e) {
+        /* ignore */
+      }
+      delete online.graceTimers[key];
+    }
+  }
+
+  function onlineScheduleGrace(player) {
+    if (!player || player.hostLocal) return;
+    const key = player.clientId || "slot-" + player.slot;
+    onlineCancelGrace(player);
+    online.graceTimers[key] = window.setTimeout(() => {
+      delete online.graceTimers[key];
+      const seats = online.players.filter(
+        (p) => p.clientId === key && !p.hostLocal
+      );
+      if (!seats.length) return;
+      if (online.inMatch) {
+        onlineReturnToLobby(
+          `${seats[0].name}${seats.length > 1 ? " DEVICE" : ""} left the match.`
+        );
+      } else {
+        online.players = online.players.filter(
+          (p) => p.clientId !== key || p.hostLocal
+        );
+        for (const seat of seats) delete onlineInputs[seat.group];
+        onlineReassignSlots();
+        onlineBroadcastLobby();
+      }
+    }, 20000);
+  }
+
+  function onlineHostAcceptJoin(conn, data) {
+    const clientId = String(data.clientId || "");
+    if (!clientId) {
+      onlineSend(conn, { t: "error", message: "Missing client id" });
+      window.setTimeout(() => {
+        try {
+          conn.close();
+        } catch (e) {
+          /* ignore */
+        }
+      }, 100);
+      return;
+    }
+    const existing = online.players.filter(
+      (p) => p.clientId === clientId && !p.hostLocal
+    );
+    if (existing.length) {
+      for (const seat of existing) {
+        if (seat.conn && seat.conn !== conn) {
+          try {
+            seat.conn.close();
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        seat.conn = conn;
+        seat.connected = true;
+        onlineInputs[seat.group] = onlineIdleInput();
+      }
+      onlineCancelGrace(existing[0]);
+      if (!online.conns.includes(conn)) online.conns.push(conn);
+      const seats = existing
+        .slice()
+        .sort((a, b) => (a.localSeat || 0) - (b.localSeat || 0));
+      onlineSend(conn, {
+        t: "welcome",
+        code: online.code,
+        seats: seats.map((p) => ({
+          slot: p.slot,
+          group: p.group,
+          localSeat: p.localSeat || 0,
+        })),
+        localCount: seats.length,
+        config: online.config,
+        players: onlinePlainPlayers(),
+        reconnect: true,
+        inMatch: online.inMatch,
+      });
+      if (online.inMatch) {
+        onlineSendState();
+        toast = {
+          text: `${seats[0].name} RECONNECTED`,
+          color: "#7ddc9b",
+          t: 0,
+          dur: 1.4,
+        };
+      } else {
+        onlineBroadcastLobby();
+      }
+      return;
+    }
+    const localCount = clamp(
+      Number(data.localCount) || 1,
+      1,
+      ONLINE_LOCAL_MAX
+    );
+    if (online.inMatch) {
+      onlineSend(conn, { t: "in-progress" });
+      window.setTimeout(() => {
+        try {
+          conn.close();
+        } catch (e) {
+          /* ignore */
+        }
+      }, 150);
+      return;
+    }
+    if (online.players.length + localCount > ONLINE_MAX) {
+      onlineSend(conn, { t: "full" });
+      window.setTimeout(() => {
+        try {
+          conn.close();
+        } catch (e) {
+          /* ignore */
+        }
+      }, 150);
+      return;
+    }
+    const added = [];
+    for (let i = 0; i < localCount; i++) {
+      const seat = {
+        slot: online.players.length,
+        group: ONLINE_GROUPS[online.players.length],
+        name: "P" + (online.players.length + 1),
+        host: false,
+        hostLocal: false,
+        connected: true,
+        clientId,
+        localSeat: i,
+        conn,
+      };
+      online.players.push(seat);
+      added.push(seat);
+      onlineInputs[seat.group] = onlineIdleInput();
+    }
+    if (!online.conns.includes(conn)) online.conns.push(conn);
+    onlineReassignSlots();
+    const seats = added
+      .slice()
+      .sort((a, b) => (a.localSeat || 0) - (b.localSeat || 0));
+    onlineSend(conn, {
+      t: "welcome",
+      code: online.code,
+      seats: seats.map((p) => ({
+        slot: p.slot,
+        group: p.group,
+        localSeat: p.localSeat || 0,
+      })),
+      localCount: seats.length,
+      config: online.config,
+      players: onlinePlainPlayers(),
+      reconnect: false,
+      inMatch: false,
+    });
+    onlineBroadcastLobby();
+  }
+
   function onlineHandleHostData(conn, data) {
     if (!data || typeof data !== "object") return;
-    const player = online.players.find((p) => p.conn === conn);
+    if (data.t === "join") {
+      onlineHostAcceptJoin(conn, data);
+      return;
+    }
+    const seatIndex = Number(data.seat || 0);
+    const player = online.players.find(
+      (p) => p.conn === conn && (p.localSeat || 0) === seatIndex
+    );
     if (!player) return;
     if (data.t === "input") {
       onlineInputs[player.group] = {
@@ -2702,46 +3588,135 @@
     } else if (data.t === "action") {
       onlineActionForGroup(player.group, data.a);
     } else if (data.t === "leave") {
+      onlineCancelGrace(player);
+      const seats = online.players.filter((p) => p.conn === conn);
+      online.players = online.players.filter((p) => p.conn !== conn);
+      online.conns = online.conns.filter((c) => c !== conn);
+      for (const seat of seats) delete onlineInputs[seat.group];
       try {
         conn.close();
       } catch (e) {
         /* ignore */
       }
-      onlineHandleHostDisconnect(conn);
+      if (online.inMatch) {
+        onlineReturnToLobby(
+          `${seats[0] ? seats[0].name : "A player"} left the match.`
+        );
+      } else {
+        onlineReassignSlots();
+        onlineBroadcastLobby();
+      }
     }
   }
 
   function onlineHandleHostDisconnect(conn) {
-    const index = online.players.findIndex((p) => p.conn === conn);
-    if (index < 0) return;
-    const group = online.players[index].group;
-    online.players.splice(index, 1);
+    const seats = online.players.filter((p) => p.conn === conn);
+    if (!seats.length) return;
+    for (const seat of seats) {
+      seat.conn = null;
+      seat.connected = false;
+      onlineInputs[seat.group] = onlineIdleInput();
+    }
     online.conns = online.conns.filter((c) => c !== conn);
-    delete onlineInputs[group];
-    if (online.inMatch) {
-      onlineReturnToLobby("A player left the match.");
-    } else {
-      onlineReassignSlots();
+    onlineScheduleGrace(seats[0]);
+    if (!online.inMatch) {
       onlineBroadcastLobby();
+    } else {
+      toast = {
+        text: `${seats[0].name}${seats.length > 1 ? " DEVICE" : ""} DISCONNECTED`,
+        color: "#ffd166",
+        t: 0,
+        dur: 1.5,
+      };
+    }
+  }
+
+  function onlineClearTimers() {
+    if (online.joinTimer) {
+      try {
+        window.clearTimeout(online.joinTimer);
+      } catch (e) {
+        /* ignore */
+      }
+      online.joinTimer = null;
+    }
+    if (online.reconnectTimer) {
+      try {
+        window.clearTimeout(online.reconnectTimer);
+      } catch (e) {
+        /* ignore */
+      }
+      online.reconnectTimer = null;
+    }
+  }
+
+  function onlineMarkReconnected() {
+    onlineClearTimers();
+    online.reconnecting = false;
+    online.reconnectTries = 0;
+    online.connecting = false;
+    online.error = "";
+    online.leaving = false;
+  }
+
+  function onlineApplySeats(seats, localCount) {
+    const list = (seats || [])
+      .slice()
+      .sort((a, b) => (a.localSeat || 0) - (b.localSeat || 0));
+    online.mySeats = list;
+    online.myGroups = list.map((s) => s.group);
+    online.mySlots = list.map((s) => s.slot);
+    online.myGroup = online.myGroups[0] || online.myGroup;
+    online.mySlot = online.mySlots.length ? online.mySlots[0] : online.mySlot;
+    if (localCount) {
+      online.localCount = clamp(localCount, 1, ONLINE_LOCAL_MAX);
+    } else if (list.length) {
+      online.localCount = clamp(list.length, 1, ONLINE_LOCAL_MAX);
     }
   }
 
   function onlineHandleClientData(data) {
     if (!data || typeof data !== "object") return;
     if (data.t === "welcome") {
+      onlineMarkReconnected();
       online.code = data.code || online.code;
-      online.mySlot = data.slot;
-      online.myGroup = data.group;
+      if (data.seats) onlineApplySeats(data.seats, data.localCount);
+      else if (data.group) {
+        onlineApplySeats(
+          [{ slot: data.slot, group: data.group, localSeat: 0 }],
+          data.localCount
+        );
+      }
       if (data.config) online.config = data.config;
       if (data.players) online.players = data.players;
-      online.connecting = false;
-      online.screen = "lobby";
-      menuScreen = "lobby";
-      phase = PHASE.READY;
+      if (data.inMatch) {
+        online.inMatch = true;
+        menuScreen = "main";
+        menuOpen = false;
+        paused = false;
+        if (data.config) {
+          mode = data.config.mode;
+          twoSeekers = false;
+          hardMode = false;
+          aiMode = false;
+          tagMode = !!data.config.tag;
+          if (mapIndex !== data.config.map || !!tagMode !== !!data.config.tag) {
+            applyMap(data.config.map);
+          }
+        }
+      } else {
+        online.inMatch = false;
+        online.screen = "lobby";
+        menuScreen = "lobby";
+        phase = PHASE.READY;
+      }
     } else if (data.t === "you") {
-      online.mySlot = data.slot;
-      online.myGroup = data.group;
+      if (data.seats) onlineApplySeats(data.seats, data.seats.length);
+      else if (data.group) {
+        onlineApplySeats([{ slot: data.slot, group: data.group, localSeat: 0 }], 1);
+      }
     } else if (data.t === "lobby") {
+      onlineMarkReconnected();
       online.inMatch = false;
       online.code = data.code || online.code;
       online.config = data.config || online.config;
@@ -2755,6 +3730,7 @@
       resetEntities();
     } else if (data.t === "start") {
       const config = data.config || { mode: 2, tag: false, map: 0 };
+      onlineMarkReconnected();
       onlineRememberLocalState();
       if (data.players) online.players = data.players;
       online.inMatch = true;
@@ -2779,24 +3755,26 @@
       online.lastInputSent = 0;
       sfx.start();
     } else if (data.t === "state") {
+      if (online.reconnecting) onlineMarkReconnected();
       onlineApplyState(data.state);
     } else if (data.t === "full") {
       onlineHostLost("That lobby is full.");
-    }
-  }
-
-  function onlineRequestAction(action) {
-    if (onlineIsHost()) {
-      onlineActionForGroup("h1", action);
-    } else if (onlineIsClient() && online.hostConn) {
-      onlineSend(online.hostConn, { t: "action", a: action });
+    } else if (data.t === "in-progress") {
+      onlineHostLost("That match has already started.");
+    } else if (data.t === "closed") {
+      onlineHostLost("The host closed the lobby.");
     }
   }
 
   function onlineActionForGroup(group, action) {
     if (!onlineIsHost() || !online.inMatch) return;
-    if (tagMode) return;
     const seekerEnt = activeSeekers().find((ent) => ent.ctrl === group);
+    const hiderEnt = hiders.find((ent) => ent.ctrl === group && ent.alive);
+    if (tagMode) {
+      const ent = seekerEnt || hiderEnt;
+      if (ent && action === "light") tryStartSnowball(ent);
+      return;
+    }
     if (seekerEnt) {
       if (action === "light") {
         seekerEnt.flashlightOn = true;
@@ -2821,6 +3799,11 @@
       return;
     }
     online.config.tag = !online.config.tag;
+    if (online.config.tag && !MAPS[online.config.map].tagMap) {
+      online.config.map = TAG_MAP_INDEX;
+    } else if (!online.config.tag && MAPS[online.config.map].tagOnly) {
+      online.config.map = normalMapForTagMap(online.config.map);
+    }
     online.notice = "";
     onlineBroadcastLobby();
     sfx.click();
@@ -2828,15 +3811,10 @@
 
   function onlineCycleMap() {
     if (!onlineIsHost() || online.inMatch) return;
-    if (online.config.tag) {
-      online.notice = "TAG always uses FIELD.";
-      return;
-    }
-    let next = (online.config.map + 1) % MAPS.length;
-    for (let i = 0; i < MAPS.length && MAPS[next].tagOnly; i++) {
-      next = (next + 1) % MAPS.length;
-    }
-    online.config.map = next;
+    const list = online.config.tag ? TAG_MAP_INDICES : NORMAL_MAP_INDICES;
+    if (!list.length) return;
+    const pos = list.indexOf(online.config.map);
+    online.config.map = list[(pos + 1) % list.length];
     online.notice = "";
     onlineBroadcastLobby();
     sfx.click();
@@ -2877,6 +3855,10 @@
 
   function onlineHostStart() {
     if (!onlineIsHost() || online.inMatch) return;
+    if (online.connecting || !online.ready) {
+      online.notice = "Lobby is still connecting.";
+      return;
+    }
     const count = online.players.length;
     if (count < 2) {
       online.notice = "Need at least 2 players to start.";
@@ -2884,6 +3866,10 @@
     }
     if (online.config.tag && count < 3) {
       online.notice = "TAG needs at least 3 players.";
+      return;
+    }
+    if (online.players.some((p) => !p.host && !p.connected)) {
+      online.notice = "Waiting for a player to reconnect.";
       return;
     }
     onlineRememberLocalState();
@@ -2895,7 +3881,7 @@
           config: {
             mode: count,
             tag: !!online.config.tag,
-            map: online.config.tag ? FIELD_INDEX : online.config.map,
+            map: online.config.map,
           },
           players: onlinePlainPlayers(),
         });
@@ -2911,7 +3897,7 @@
     aiMode = false;
     tagMode = !!online.config.tag;
     roundAssignments.clear();
-    applyMap(tagMode ? FIELD_INDEX : online.config.map);
+    applyMap(online.config.map);
     onlineInputs = {};
     online.players.forEach((player) => {
       onlineInputs[player.group] = {
@@ -2952,6 +3938,10 @@
       stun: round2(ent.stunT),
       tb: round2(ent.tagBoostT || 0),
       tslow: round2(ent.tagSlowT || 0),
+      sn: round2(ent.snowT || 0),
+      mk: round2(ent.markedT || 0),
+      mc: ent.markedColor || null,
+      mb: ent.markedBy || null,
       elim: ent.eliminated ? 1 : 0,
       tt: round2(ent.teleportT),
       td: ent.teleportDoor,
@@ -3051,6 +4041,10 @@
       stunT: data.stun || 0,
       tagBoostT: data.tb || 0,
       tagSlowT: data.tslow || 0,
+      snowT: data.sn || 0,
+      markedT: data.mk || 0,
+      markedColor: data.mc || null,
+      markedBy: data.mb || null,
       eliminated: !!data.elim,
       teleportT: data.tt || 0,
       teleportDoor: data.td,
@@ -3099,24 +4093,63 @@
     ping = state.ping ? { ...state.ping, hit: new Set() } : null;
     radars = (state.radars || []).slice();
     toast = state.toast ? { ...state.toast } : null;
-    const previousAlive = new Map(hiders.map((h) => [h.ctrl, h.alive]));
-    hiders = (state.hiders || []).map(onlineUnpackEnt);
+    const previous = new Map();
+    for (const hider of hiders) previous.set(hider.ctrl, hider);
+    for (const ent of [seeker, seeker2]) {
+      if (ent) previous.set(ent.ctrl, ent);
+    }
+    const previousAlive = new Map();
+    for (const [ctrl, ent] of previous) previousAlive.set(ctrl, ent.alive);
+    const adopt = (ent) => {
+      ent.tx = ent.x;
+      ent.ty = ent.y;
+      const old = previous.get(ent.ctrl);
+      if (old && Math.hypot(ent.tx - old.x, ent.ty - old.y) < 250) {
+        ent.x = old.x;
+        ent.y = old.y;
+      }
+      return ent;
+    };
+    hiders = (state.hiders || []).map((data) => adopt(onlineUnpackEnt(data)));
     for (const hider of hiders) {
       if (!hider.alive && previousAlive.get(hider.ctrl) === true) {
         burst(hider.x, hider.y, hider.color, 18);
       }
     }
     seeker = state.seeker
-      ? onlineUnpackEnt(state.seeker)
+      ? adopt(onlineUnpackEnt(state.seeker))
       : makeEntity(SPAWN.seeker, -1);
-    seeker2 = state.seeker2 ? onlineUnpackEnt(state.seeker2) : null;
+    if (seeker && seeker.tx === undefined) {
+      seeker.tx = seeker.x;
+      seeker.ty = seeker.y;
+    }
+    seeker2 = state.seeker2 ? adopt(onlineUnpackEnt(state.seeker2)) : null;
+    const allEntities = hiders.concat(
+      seeker ? [seeker] : [],
+      seeker2 ? [seeker2] : []
+    );
+    for (const ent of allEntities) {
+      const old = previous.get(ent.ctrl);
+      if (ent.markedT > 0 && (!old || old.markedT <= 0)) {
+        const thrower = allEntities.find((e) => e.ctrl === ent.markedBy);
+        if (thrower) spawnSnowball(thrower, ent);
+        snowBurst(ent.x, ent.y, ent.markedColor || ent.color, 12);
+        sfx.snowball();
+      }
+    }
   }
 
   function onlineSendClientInput(now) {
     if (!online.inMatch || !onlineIsClient() || !online.hostConn) return;
     if (now - online.lastInputSent < 1000 / ONLINE_INPUT_HZ) return;
     online.lastInputSent = now;
-    onlineSend(online.hostConn, { t: "input", ...onlineLocalInput() });
+    for (let seat = 0; seat < online.localCount; seat++) {
+      onlineSend(online.hostConn, {
+        t: "input",
+        seat,
+        ...onlineLocalInputForSeat(seat),
+      });
+    }
   }
 
   function onlineClientTick(dt) {
@@ -3127,6 +4160,12 @@
       if (toast.t >= toast.dur) toast = null;
     }
     if (phase === PHASE.OVER || phase === PHASE.MATCH) overSince += dt;
+    const k = 1 - Math.exp(-22 * dt);
+    for (const ent of hiders.concat(activeSeekers())) {
+      if (ent.tx === undefined) continue;
+      ent.x += (ent.tx - ent.x) * k;
+      ent.y += (ent.ty - ent.y) * k;
+    }
     const entities = hiders.concat(activeSeekers());
     for (const ent of entities) {
       const speed = Math.hypot(ent.vx, ent.vy);
@@ -3158,9 +4197,15 @@
       if (pointInRect(x, y, ONLINE_UI.create)) return "create";
       if (pointInRect(x, y, ONLINE_UI.join)) return "join";
       if (pointInRect(x, y, ONLINE_UI.back)) return "back";
+      if (pointInRect(x, y, ONLINE_UI.local1)) return "local1";
+      if (pointInRect(x, y, ONLINE_UI.local2)) return "local2";
+      if (pointInRect(x, y, ONLINE_UI.local3)) return "local3";
     } else if (menuScreen === "join") {
       if (pointInRect(x, y, ONLINE_UI.codeJoin)) return "codeJoin";
       if (pointInRect(x, y, ONLINE_UI.codeBack)) return "codeBack";
+      if (pointInRect(x, y, ONLINE_UI.joinLocal1)) return "local1";
+      if (pointInRect(x, y, ONLINE_UI.joinLocal2)) return "local2";
+      if (pointInRect(x, y, ONLINE_UI.joinLocal3)) return "local3";
     } else if (menuScreen === "lobby") {
       if (pointInRect(x, y, ONLINE_UI.copy)) return "copy";
       if (onlineIsHost()) {
@@ -3432,14 +4477,39 @@
         nextRound();
         return;
       }
-      const bind = controls.h1;
-      if (code === bind.light) {
-        onlineRequestAction("light");
-        return;
-      }
-      if (code === bind.ping) {
-        onlineRequestAction("ping");
-        return;
+      if (onlineIsHost()) {
+        for (const seat of online.players) {
+          if (!seat.hostLocal) continue;
+          const bind = onlineLocalBindForSeat(seat.localSeat || 0);
+          if (code === bind.light) {
+            onlineActionForGroup(seat.group, "light");
+            return;
+          }
+          if (code === bind.ping) {
+            onlineActionForGroup(seat.group, "ping");
+            return;
+          }
+        }
+      } else {
+        for (let seat = 0; seat < online.localCount; seat++) {
+          const bind = onlineLocalBindForSeat(seat);
+          if (code === bind.light) {
+            onlineSend(online.hostConn, {
+              t: "action",
+              seat,
+              a: "light",
+            });
+            return;
+          }
+          if (code === bind.ping) {
+            onlineSend(online.hostConn, {
+              t: "action",
+              seat,
+              a: "ping",
+            });
+            return;
+          }
+        }
       }
       return;
     }
@@ -3525,6 +4595,16 @@
       return;
     }
 
+    if (!aiMode && tagMode && SNOW_MAP && phase === PHASE.SEEK && !paused) {
+      for (const ent of hiders.concat(activeSeekers())) {
+        if (!ent.alive) continue;
+        if (code === controls[ent.ctrl].light) {
+          tryStartSnowball(ent);
+          return;
+        }
+      }
+    }
+
     if (
       !aiMode &&
       (phase === PHASE.HIDE || phase === PHASE.SEEK) &&
@@ -3578,7 +4658,7 @@
     if (pointInRect(x, y, MENU.four)) return "four";
     if (pointInRect(x, y, MENU.duo)) return "duo";
     if (pointInRect(x, y, MENU.tag)) return "tag";
-    if (!tagMode && pointInRect(x, y, MENU.map)) return "map";
+    if (pointInRect(x, y, MENU.map)) return "map";
     if (pointInRect(x, y, MENU.hard)) return "hard";
     if (pointInRect(x, y, MENU.ai)) return "ai";
     if (pointInRect(x, y, MENU.fullscreen)) return "fullscreen";
@@ -3677,6 +4757,15 @@
         menuScreen = "online";
         online.screen = "menu";
         online.error = "";
+        sfx.click();
+      } else if (onlineHit === "local1") {
+        online.localCount = 1;
+        sfx.click();
+      } else if (onlineHit === "local2") {
+        online.localCount = 2;
+        sfx.click();
+      } else if (onlineHit === "local3") {
+        online.localCount = 3;
         sfx.click();
       } else if (onlineHit === "copy") {
         try {
@@ -3789,9 +4878,9 @@
     return !!concealSpotAt(ent);
   }
 
-  function inMud(ent) {
-    for (const puddle of MUD) {
-      if (pointInEllipse(ent.x, ent.y, puddle)) return true;
+  function inSnowPile(ent) {
+    for (const pile of SNOW_PILES) {
+      if (pointInEllipse(ent.x, ent.y, pile)) return true;
     }
     return false;
   }
@@ -3799,15 +4888,11 @@
   function terrainSpeedMult(ent) {
     let mult = 1;
     if (TALL_GRASS.length && inTallGrass(ent)) mult *= CFG.tag.grassSlow;
-    if (MUD.length && inMud(ent)) mult *= CFG.tag.mudSlow;
+    if (SNOW_PILES.length && inSnowPile(ent)) mult *= CFG.tag.snowPileSlow;
     return mult;
   }
 
   function refreshConcealSpots() {
-    if (!tagMode) {
-      CONCEAL_SPOTS = HIDES;
-      return;
-    }
     const grass = TALL_GRASS.map((patch) => ({
       x: patch.x,
       y: patch.y,
@@ -4064,6 +5149,47 @@
     }
   }
 
+  function spawnSnowball(thrower, target) {
+    const dx = target.x - thrower.x;
+    const dy = target.y - thrower.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const speed = 1050;
+    particles.push({
+      type: "snowball",
+      x: thrower.x,
+      y: thrower.y,
+      vx: (dx / d) * speed,
+      vy: (dy / d) * speed,
+      life: Math.min(0.6, d / speed),
+      max: 0.6,
+      size: 4.5,
+      color: "#f8fdff",
+      rot: 0,
+      vr: 0,
+    });
+  }
+
+  function snowBurst(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const ang = rand(0, TAU);
+      const sp = rand(40, 170);
+      particles.push({
+        type: "snowflake",
+        x: x + rand(-6, 6),
+        y: y + rand(-6, 6),
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        life: rand(0.4, 0.9),
+        max: 0.9,
+        size: rand(1.8, 3.8),
+        color:
+          i % 4 === 0 ? color : Math.random() < 0.5 ? "#eaf8ff" : "#cfe9f7",
+        rot: rand(0, TAU),
+        vr: rand(-5, 5),
+      });
+    }
+  }
+
   function burst(x, y, color, count) {
     for (let i = 0; i < count; i++) {
       const ang = rand(0, TAU);
@@ -4193,6 +5319,7 @@
       if (p.type === "confetti") p.vy += 30 * dt;
       if (p.type === "dust") p.vy -= 6 * dt;
       if (p.type === "sweat") p.vy += 150 * dt;
+      if (p.type === "snowflake") p.vy += 70 * dt;
     }
   }
 
@@ -4498,7 +5625,12 @@
 
   function update(dt) {
     if (online.inMatch && onlineIsHost()) {
-      onlineInputs.h1 = onlineLocalInput();
+      for (const seat of online.players) {
+        if (!seat.hostLocal) continue;
+        onlineInputs[seat.group] = onlineLocalInputForSeat(
+          seat.localSeat || 0
+        );
+      }
     }
     updateParticles(dt);
     if (shake > 0) shake = Math.max(0, shake - dt * 55);
@@ -4604,6 +5736,33 @@
               hider.sweatT = rand(0.08, 0.16);
             }
             break;
+          }
+        }
+      }
+    }
+
+    if (tagMode && SNOW_MAP) {
+      const snowPlayers = hiders
+        .filter((h) => h.alive)
+        .concat(activeSeekers());
+      for (const ent of snowPlayers) {
+        if (ent.snowT > 0) ent.snowT = Math.max(0, ent.snowT - dt);
+        if (inSnowPile(ent)) ent.snowT = CFG.tag.snowCoatTime;
+      }
+      if (phase === PHASE.SEEK) {
+        for (const ent of snowPlayers) {
+          if (ent.snowballCD > 0) {
+            ent.snowballCD = Math.max(0, ent.snowballCD - dt);
+          }
+          if (ent.snowballSlowT > 0) {
+            ent.snowballSlowT = Math.max(0, ent.snowballSlowT - dt);
+          }
+          if (ent.markedT > 0) {
+            ent.markedT = Math.max(0, ent.markedT - dt);
+          }
+          if (ent.snowballWindT > 0) {
+            ent.snowballWindT = Math.max(0, ent.snowballWindT - dt);
+            if (ent.snowballWindT <= 0) throwSnowball(ent);
           }
         }
       }
@@ -4752,6 +5911,8 @@
         }
       }
       if (hider.tagSlowT > 0) mult *= CFG.tag.coneSlow;
+      if (hider.snowballSlowT > 0) mult *= CFG.tag.snowballSlow;
+      if (hider.snowballWindT > 0) mult *= CFG.tag.snowballWindSlow;
       if (hider.tagBoostT > 0) mult *= CFG.tag.transferBoost;
       if (mult !== 1) {
         stats = {
@@ -4822,22 +5983,32 @@
           continue;
         }
         const slow = ent.spikeSlowT > 0 ? CFG.hard.seekerSlow : 1;
+        const snowSlow =
+          ent.snowballSlowT > 0 ? CFG.tag.snowballSlow : 1;
+        const windSlow =
+          ent.snowballWindT > 0 ? CFG.tag.snowballWindSlow : 1;
         const seekerStats = tagMode
           ? {
               walk:
                 (online.inMatch ? onlineSeekerWalk() : CFG.tag.seekerWalk) *
-                terrainSpeedMult(ent),
+                terrainSpeedMult(ent) *
+                snowSlow *
+                windSlow,
               sprint:
                 (online.inMatch ? onlineSeekerWalk() : CFG.tag.seekerWalk) *
-                terrainSpeedMult(ent),
+                terrainSpeedMult(ent) *
+                snowSlow *
+                windSlow,
             }
           : {
               walk:
                 (online.inMatch ? onlineSeekerWalk() : CFG.seeker.walk) *
                 seekerDoorBoost *
                 (seekerBoost > 0 ? CFG.seeker.finalBoost : 1) *
-                slow,
-              sprint: CFG.seeker.sprint,
+                slow *
+                snowSlow *
+                windSlow,
+              sprint: CFG.seeker.sprint * snowSlow * windSlow,
             };
         const dir = aiMode
           ? ent.aiDir
@@ -5007,25 +6178,25 @@
       phase === PHASE.READY ||
       phase === PHASE.OVER ||
       phase === PHASE.MATCH;
-    const viewerHider = online.inMatch ? onlineViewerHider() : null;
-    const viewerHiderGroup = viewerHider ? viewerHider.ctrl : null;
+    const localHiderGroups = new Set(
+      online.inMatch ? onlineViewerHiders().map((h) => h.ctrl) : []
+    );
     for (const hider of hiders) {
       if (!hider.alive) continue;
-      if (online.inMatch && viewerHiderGroup && hider.ctrl !== viewerHiderGroup) {
+      const isSelf =
+        online.inMatch && localHiderGroups.has(hider.ctrl);
+      if (
+        online.inMatch &&
+        localHiderGroups.size > 0 &&
+        !isSelf
+      ) {
         continue;
       }
       const role = hider.id === 1 ? "hider2" : "hider";
-      const isSelf =
-        online.inMatch &&
-        viewerHiderGroup &&
-        hider.ctrl === viewerHiderGroup;
       let show;
       if (online.inMatch) {
-        if (viewerHiderGroup) {
-          show = true;
-        } else {
-          show = !hider.insideHide;
-        }
+        if (localHiderGroups.size > 0) show = true;
+        else show = !hider.insideHide;
       } else {
         show = tagMode ? true : revealAll || hider.spotted;
       }
@@ -5090,29 +6261,33 @@
     d.fillRect(0, 0, VIEW_W, VIEW_H);
 
     if (online.inMatch) {
-      const viewerSeeker = onlineViewerSeeker();
-      const viewerHider = onlineViewerHider();
-      if (viewerSeeker) {
-        addSeekerLight(viewerSeeker);
-        if (phase === PHASE.SEEK) {
+      const localSeekers = onlineViewerSeekers();
+      const localHiders = onlineViewerHiders();
+      if (localSeekers.length || localHiders.length) {
+        for (const ent of localSeekers) addSeekerLight(ent);
+        for (const hider of localHiders) addHiderLight(hider, true);
+        if (localSeekers.length && phase === PHASE.SEEK) {
           for (const hider of hiders) {
             if (!hider.alive || hider.insideHide) continue;
+            if (localHiders.includes(hider)) continue;
             if (
-              segmentBlocked(
-                viewerSeeker.x,
-                viewerSeeker.y,
-                hider.x,
-                hider.y
+              localSeekers.some(
+                (seeker) =>
+                  !segmentBlocked(
+                    seeker.x,
+                    seeker.y,
+                    hider.x,
+                    hider.y
+                  )
               )
             ) {
-              continue;
+              addHiderLight(hider, false);
             }
-            addHiderLight(hider, false);
           }
         }
-      } else if (viewerHider) {
-        addHiderLight(viewerHider, true);
-        for (const ent of activeSeekers()) addSeekerLight(ent);
+        if (localHiders.length) {
+          for (const ent of activeSeekers()) addSeekerLight(ent);
+        }
       } else {
         for (const ent of activeSeekers()) addSeekerLight(ent);
         for (const hider of hiders) {
@@ -5323,14 +6498,14 @@
       ctx.restore();
     }
 
-    const viewerHider = online.inMatch ? onlineViewerHider() : null;
-    const viewerHiderGroup = viewerHider ? viewerHider.ctrl : null;
+    const localHiders = online.inMatch ? onlineViewerHiders() : [];
+    const localHiderGroups = new Set(localHiders.map((h) => h.ctrl));
     for (const hider of hiders) {
       if (!hider.alive || hider.revealT <= 0) continue;
       if (
         online.inMatch &&
-        viewerHiderGroup &&
-        hider.ctrl !== viewerHiderGroup
+        localHiderGroups.size > 0 &&
+        !localHiderGroups.has(hider.ctrl)
       ) {
         continue;
       }
@@ -5341,9 +6516,9 @@
       drawReticle(hider.x, hider.y, hider.revealT / CFG.pingReveal);
     }
 
-    if (viewerHider) {
+    if (localHiderGroups.size > 0) {
       for (const hider of hiders) {
-        if (!hider.alive || hider.ctrl === viewerHiderGroup) continue;
+        if (!hider.alive || localHiderGroups.has(hider.ctrl)) continue;
         const role = hider.id === 1 ? "hider2" : "hider";
         const hidden = hider.insideHide;
         drawPlayerSprite(hider, role, hidden ? 0.42 : 0.92);
@@ -5435,6 +6610,29 @@
       ctx.restore();
     }
 
+    if (online.inMatch) {
+      for (const ent of hiders.concat(activeSeekers())) {
+        if (!ent.alive || ent.markedT <= 0) continue;
+        const a = clamp(ent.markedT / CFG.tag.snowballMarkTime, 0, 1);
+        const color = ent.markedColor || ent.color;
+        ctx.save();
+        ctx.globalAlpha = 0.4 + 0.45 * a;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(ent.x, ent.y, R + 12 + Math.sin(time * 8) * 2, 0, TAU);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(ent.x, ent.y - R - 22);
+        ctx.lineTo(ent.x - 6, ent.y - R - 32);
+        ctx.lineTo(ent.x + 6, ent.y - R - 32);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
     if (toast) {
       const p = toast.t / toast.dur;
       const a = p < 0.18 ? p / 0.18 : 1 - (p - 0.18) / 0.82;
@@ -5474,6 +6672,24 @@
       ctx.beginPath();
       ctx.arc(-p.size * 0.16, -p.size * 0.3, p.size * 0.22, 0, TAU);
       ctx.fill();
+    } else if (p.type === "snowball") {
+      ctx.fillStyle = "#f8fdff";
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(160, 205, 230, 0.8)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (p.type === "snowflake") {
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * p.size, Math.sin(a) * p.size);
+        ctx.lineTo(-Math.cos(a) * p.size, -Math.sin(a) * p.size);
+        ctx.stroke();
+      }
     } else {
       ctx.beginPath();
       ctx.arc(0, 0, p.size, 0, TAU);
@@ -5528,6 +6744,20 @@
       sprite.size,
       sprite.size
     );
+
+    if (tagMode && p.snowT > 0) {
+      const coat = clamp(p.snowT, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = op * (0.5 + 0.3 * coat);
+      ctx.fillStyle = "#f4fbff";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, R + 1, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
 
     if (isSeeker) {
       ctx.fillStyle = "#000";
@@ -5638,14 +6868,22 @@
     const y = HUD_H + VIEW_H - 21;
     ctx.save();
     ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = 3;
     if (online.inMatch) {
-      const role = roleForGroup(onlineIsHost() ? "h1" : online.myGroup);
+      const groups = onlineViewerGroups();
+      const roles = groups.map((group) => roleForGroup(group)).filter(Boolean);
+      const roleText = roles.map((role) => role.label).join(" / ");
       ctx.textAlign = "center";
       ctx.font = `600 10px ${FONT}`;
-      ctx.fillStyle = role ? role.color : "rgba(125, 211, 252, 0.7)";
-      const who = onlineIsHost() ? "ONLINE HOST" : `ONLINE · P${online.mySlot + 1}`;
+      ctx.fillStyle = roles[0]
+        ? roles[0].color
+        : "rgba(125, 211, 252, 0.7)";
+      const who = onlineIsHost()
+        ? "ONLINE HOST"
+        : `ONLINE · ${groups.length} LOCAL`;
       ctx.fillText(
-        `${who}${role ? " · " + role.label : ""} · ESC ${
+        `${who}${roleText ? " · " + roleText : ""} · ESC ${
           onlineIsHost() ? "lobby" : "leave"
         }`,
         VIEW_W / 2,
@@ -5670,8 +6908,14 @@
       let detail;
       if (tagMode) {
         detail = role.isSeeker
-          ? `${moveLabel(bind)} · 60° slow cone`
-          : `${moveLabel(bind)} · grass hides`;
+          ? SNOW_MAP
+            ? `${moveLabel(bind)} · 40° cone · ${keyLabel(
+                bind.light
+              )} snowball`
+            : `${moveLabel(bind)} · 40° slow cone`
+          : `${moveLabel(bind)} · ${
+              SNOW_MAP ? `${keyLabel(bind.light)} snowball` : "grass hides"
+            }`;
       } else {
         detail = `${moveLabel(bind)} · ${keyLabel(bind.light)} ${
           role.isSeeker ? "mode" : "light"
@@ -5972,7 +7216,9 @@
             : "HIDER"
           : "HIDER";
         const value = tagMode
-          ? `${moveLabel(bind)} · grass hides · mud slows`
+          ? SNOW_MAP
+            ? `${moveLabel(bind)} · ${keyLabel(bind.light)} snowball`
+            : `${moveLabel(bind)} · grass hides`
           : `${moveLabel(bind)} · ${keyLabel(bind.sprint)} ${
               hardMode ? "dash" : "sprint"
             } · ${keyLabel(bind.light)} light`;
@@ -5989,7 +7235,9 @@
       hiderCount > 1 ? "HIDERS" : "HIDER",
       hiderRows,
       tagMode
-        ? "TAG: no sprint · bushes and grass conceal · mud slows."
+        ? SNOW_MAP
+          ? "TAG: light key = snowball · snow piles slow + whiten."
+          : "TAG: no sprint · bushes and tall grass conceal."
         : hardMode
         ? mode === 2 || multiSeekers
           ? "HARD: dash · spikes slow 3s."
@@ -6001,7 +7249,9 @@
       .map((group) => {
         const bind = controls[group];
         const value = tagMode
-          ? `${moveLabel(bind)} · 60° light slows 15%`
+          ? SNOW_MAP
+            ? `${moveLabel(bind)} · ${keyLabel(bind.light)} snowball`
+            : `${moveLabel(bind)} · 40° light slows 5%`
           : `${moveLabel(bind)} · ${keyLabel(bind.light)} mode · ${keyLabel(
               bind.ping
             )} ${hardMode ? "radar" : "ping"}`;
@@ -6018,7 +7268,9 @@
       multiSeekers ? "SEEKERS" : "SEEKER",
       seekerRows,
       tagMode
-        ? "TAG: tag = 1s stun + 2s escape boost for the old seeker."
+        ? SNOW_MAP
+          ? "TAG: 40° cone · light key = snowball · 1s stun + 2s boost."
+          : "TAG: tag = 1s stun + 2s boost."
         : hardMode
         ? multiSeekers
           ? "HARD: radar · spikes eliminate a seeker."
@@ -6046,7 +7298,11 @@
     );
     ctx.fillText(
       tagMode
-        ? "No sprint · 1 seeker · tags transfer the role · 60° cone slows 15% · bushes and grass conceal · FIELD map."
+        ? SNOW_MAP
+          ? "Light key = snowball (0.2s wind-up) · 40° cone slows 5% · snow piles whiten · SNOW map."
+          : "40° cone slows 5% · bushes and tall grass conceal · " +
+            MAPS[mapIndex].name +
+            " map."
         : "Hiders 30° / 0.7× · Seeker 35°/1.5×, 75°/1×, 360°/0.3× (reveals through walls) · roles change.",
       CW / 2,
       534
@@ -6115,6 +7371,18 @@
     ctx.restore();
   }
 
+  function drawLocalCountSelector(rects) {
+    const labels = ["1 LOCAL", "2 LOCAL", "3 LOCAL"];
+    for (let i = 0; i < rects.length; i++) {
+      drawBigButton(
+        rects[i],
+        labels[i],
+        online.localCount === i + 1,
+        false
+      );
+    }
+  }
+
   function drawOnlineMenu() {
     drawOverlayBackdrop(0.9);
     ctx.save();
@@ -6133,18 +7401,23 @@
     drawBigButton(ONLINE_UI.create, "CREATE LOBBY", true, false);
     drawBigButton(ONLINE_UI.join, "JOIN LOBBY", false, false);
     drawBigButton(ONLINE_UI.back, "BACK", false, false);
+    drawLocalCountSelector([
+      ONLINE_UI.local1,
+      ONLINE_UI.local2,
+      ONLINE_UI.local3,
+    ]);
 
     ctx.font = `500 13px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.65)";
     ctx.fillText(
-      "Peer-to-peer · host keeps the lobby alive · up to 4 players",
+      "Peer-to-peer · up to 6 players · 1-3 local players per device",
       CW / 2,
-      438
+      466
     );
     if (online.error) {
       ctx.font = `700 13px ${FONT}`;
       ctx.fillStyle = "rgba(255, 130, 130, 0.9)";
-      ctx.fillText(online.error, CW / 2, 474);
+      ctx.fillText(online.error, CW / 2, 500);
     }
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
@@ -6207,11 +7480,16 @@
       online.connecting
     );
     drawBigButton(ONLINE_UI.codeBack, "BACK", false, false);
+    drawLocalCountSelector([
+      ONLINE_UI.joinLocal1,
+      ONLINE_UI.joinLocal2,
+      ONLINE_UI.joinLocal3,
+    ]);
 
     if (online.error) {
       ctx.font = `700 13px ${FONT}`;
       ctx.fillStyle = "rgba(255, 130, 130, 0.9)";
-      ctx.fillText(online.error, CW / 2, 452);
+      ctx.fillText(online.error, CW / 2, 492);
     }
     ctx.font = `500 12px ${FONT}`;
     ctx.fillStyle = "rgba(160, 196, 176, 0.5)";
@@ -6243,28 +7521,41 @@
     }
 
     const count = online.players.length;
+    const allConnected = online.players.every((p) => p.host || p.connected);
     ctx.textAlign = "left";
     ctx.font = `700 12px ${FONT}`;
     ctx.fillStyle = "rgba(198, 226, 210, 0.7)";
     ctx.fillText(`PLAYERS ${count}/${ONLINE_MAX}`, 300, 268);
     for (let i = 0; i < ONLINE_MAX; i++) {
       const player = online.players[i];
-      const y = 294 + i * 34;
-      const mine = player && player.slot === online.mySlot;
+      const y = 294 + i * 24;
+      const mine = player
+        ? onlineIsHost()
+          ? !!player.hostLocal
+          : online.mySlots.includes(player.slot)
+        : false;
       ctx.font = `700 14px ${FONT}`;
       ctx.fillStyle = player
         ? PLAYER_COLORS[player.group] || "#effff6"
         : "rgba(160, 196, 176, 0.25)";
+      const controls = mine
+        ? " · " +
+          moveLabel(onlineLocalBindForSeat(player.localSeat || 0))
+        : "";
       ctx.fillText(
         player
-          ? `${player.name}${player.host ? " · HOST" : ""}${mine ? " · YOU" : ""}`
+          ? `${player.name}${player.host ? " · HOST" : ""}${
+              player.hostLocal && !player.host ? " · HOST LOCAL" : ""
+            }${mine ? " · YOU" : ""}${controls}${
+              player.connected === false ? " · RECONNECTING..." : ""
+            }`
           : `P${i + 1} · waiting...`,
         300,
         y
       );
     }
 
-    const mapName = MAPS[online.config.tag ? FIELD_INDEX : online.config.map].name;
+    const mapName = MAPS[online.config.map].name;
     ctx.textAlign = "center";
     ctx.font = `700 13px ${FONT}`;
     ctx.fillStyle = "rgba(214, 238, 224, 0.75)";
@@ -6281,27 +7572,28 @@
         online.config.tag,
         count < 3 && !online.config.tag
       );
-      drawBigButton(
-        ONLINE_UI.map,
-        "MAP · " + mapName,
-        false,
-        online.config.tag
-      );
+      drawBigButton(ONLINE_UI.map, "MAP · " + mapName, false, false);
       drawBigButton(
         ONLINE_UI.start,
         online.connecting
           ? "CREATING LOBBY..."
           : count < 2
           ? "NEED 2+ PLAYERS"
+          : !allConnected
+          ? "WAITING FOR RECONNECT..."
           : "START MATCH",
         true,
-        online.connecting || count < 2
+        online.connecting || count < 2 || !allConnected
       );
     } else {
       ctx.font = `800 18px ${FONT}`;
       ctx.fillStyle = "rgba(239, 255, 246, 0.8)";
       ctx.fillText(
-        online.connecting ? "CONNECTING..." : "WAITING FOR HOST...",
+        online.reconnecting
+          ? "RECONNECTING..."
+          : online.connecting
+          ? "CONNECTING..."
+          : "WAITING FOR HOST...",
         CW / 2,
         574
       );
@@ -6361,7 +7653,9 @@
       ctx.fillText(card.title, card.x + 22, card.y + 52);
 
       const tip = tagMode
-        ? "TAG: no sprint · grass and bushes hide"
+        ? SNOW_MAP
+          ? "TAG: no sprint · light key = snowball"
+          : "TAG: no sprint · grass hides"
         : hardMode
         ? "HARD: dash / radar · spikes"
         : "Seeker: light modes, no sprint.";
@@ -6676,7 +7970,7 @@
 
   function drawMapButton() {
     const rect = MENU.map;
-    const hover = !tagMode && pointInRect(mouse.x, mouse.y, rect);
+    const hover = pointInRect(mouse.x, mouse.y, rect);
     ctx.save();
     roundRectPath(rect.x, rect.y, rect.w, rect.h, 7);
     ctx.fillStyle = tagMode
@@ -6697,7 +7991,9 @@
       ? "rgba(255, 233, 180, 0.9)"
       : "rgba(239, 255, 246, 0.9)";
     ctx.fillText(
-      tagMode ? "MAP · FIELD" : `MAP ${mapIndex + 1} · ${MAPS[mapIndex].name}`,
+      tagMode
+        ? "MAP · " + MAPS[mapIndex].name
+        : `MAP ${mapIndex + 1} · ${MAPS[mapIndex].name}`,
       rect.x + rect.w / 2,
       rect.y + rect.h / 2 + 1
     );
@@ -6820,6 +8116,24 @@
     ctx.restore();
   }
 
+  function drawReconnectOverlay() {
+    ctx.save();
+    drawOverlayBackdrop(0.6);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `800 46px ${FONT}`;
+    ctx.fillStyle = "#effff6";
+    ctx.fillText("RECONNECTING...", CW / 2, CH / 2 - 12);
+    ctx.font = `500 15px ${FONT}`;
+    ctx.fillStyle = "rgba(198, 226, 210, 0.8)";
+    ctx.fillText(
+      `Trying to reach the host${online.reconnectTries > 1 ? " · attempt " + online.reconnectTries : ""}`,
+      CW / 2,
+      CH / 2 + 28
+    );
+    ctx.restore();
+  }
+
   function drawMuteBadge() {
     if (!muted) return;
     ctx.save();
@@ -6836,7 +8150,9 @@
     ctx.font = `600 9px ${FONT}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(170, 194, 180, 0.42)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.55)";
+    ctx.shadowBlur = 3;
+    ctx.fillStyle = "rgba(190, 208, 198, 0.62)";
     ctx.fillText("made by mrketchup1st", 8, CH - 6);
     ctx.restore();
   }
@@ -6896,6 +8212,8 @@
       drawPauseOverlay();
     }
 
+    if (online.inMatch && online.reconnecting) drawReconnectOverlay();
+
     drawCredit();
   }
 
@@ -6943,7 +8261,7 @@
     }
     hardMode = false;
     saveHardMode();
-    applyMap(FIELD_INDEX);
+    applyMap(TAG_MAP_INDEX);
   } else {
     applyMap(mapIndex);
   }
