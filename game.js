@@ -137,9 +137,10 @@
       snowballWindSlow: 0.25,
       snowballCooldown: 1,
       snowballRange: 900,
-      snowballSlow: 0.8,
-      snowballSlowTime: 2,
+      snowballSlow: 0.55,
+      snowballSlowTime: 1,
       snowballMarkTime: 2.5,
+      snowballCoatTime: 1,
     },
   };
 
@@ -2704,6 +2705,7 @@
     const target = nearestSnowballTarget(ent);
     if (!target) return;
     target.snowballSlowT = CFG.tag.snowballSlowTime;
+    target.snowT = Math.max(target.snowT || 0, CFG.tag.snowballCoatTime);
     target.markedT = CFG.tag.snowballMarkTime;
     target.markedColor = ent.color;
     target.markedBy = ent.ctrl;
